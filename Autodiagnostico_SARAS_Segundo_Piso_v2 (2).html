@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autodiagnóstico SARAS — Instituciones de Segundo Piso</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap');
+
+  :root{
+    /* Paleta institucional GGGI (extraída del tema oficial de PowerPoint) */
+    --forest-900:#04463d;   /* teal muy oscuro - texto de encabezados */
+    --forest-800:#08b89c;   /* teal GGGI (color primario de marca) */
+    --forest-700:#069c84;   /* teal hover / oscurecido */
+    --moss-500:#367865;     /* verde GGGI secundario (accent5) */
+    --moss-300:#8fd8c9;     /* teal claro */
+    --sage-100:#e3f5f1;     /* teal muy claro (fondos suaves) */
+    --parchment:#f6f8f8;
+    --paper:#ffffff;
+    --ink:#221f20;          /* tinta institucional GGGI */
+    --ink-soft:#5c5c58;
+    --gold:#f5b01b;         /* dorado GGGI (accent2) */
+    --red:#dc5758;          /* coral GGGI (accent4), usado también como semáforo 0 */
+    --orange:#e08a2c;
+    --yellow:#f5b01b;
+    --green:#367865;
+    --line:#dbe4e2;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(4,70,61,0.07), 0 6px 20px rgba(4,70,61,0.07);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Lato', 'Calibri', 'Segoe UI', sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{
+    font-family:'Lato','Cambria','Georgia',sans-serif;
+    color:var(--forest-900);
+    font-weight:700;
+    margin:0;
+  }
+  #app{
+    max-width:720px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:28px;
+    background:var(--forest-800);
+    border-bottom:4px solid var(--gold);
+    border-radius:var(--radius) var(--radius) 0 0;
+    padding:14px 20px;
+  }
+  .brand .mark{
+    font-family:'Lato',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.02em;
+    color:#ffffff;
+  }
+  .brand .mark span{color:var(--sage-100); font-weight:400;}
+  .brand .tag{
+    font-size:12px;
+    color:#eafaf6;
+    text-align:right;
+  }
+  .brand .logo{height:26px; width:auto; display:block;}
+  .brand-left{display:flex; align-items:center; gap:14px;}
+
+  /* ---------- INTRO ---------- */
+  .intro-hero{
+    background:var(--forest-800);
+    color:var(--paper);
+    border-radius:var(--radius);
+    padding:40px 32px;
+    margin-bottom:28px;
+    position:relative;
+    overflow:hidden;
+  }
+  .intro-hero::after{
+    content:"";
+    position:absolute;
+    right:-40px; top:-40px;
+    width:200px;height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(180,146,47,0.25), transparent 70%);
+  }
+  .intro-hero h1{
+    color:var(--paper);
+    font-size:clamp(26px,4vw,34px);
+    line-height:1.15;
+    max-width:26ch;
+  }
+  .hero-underline{
+    width:64px; height:4px; background:var(--gold); border-radius:2px; margin-top:12px;
+  }
+  .intro-hero p{
+    color:var(--sage-100);
+    max-width:52ch;
+    margin-top:14px;
+    font-size:15px;
+  }
+  .stat-row{
+    display:flex;
+    gap:28px;
+    margin-top:26px;
+    flex-wrap:wrap;
+  }
+  .stat-row .stat b{
+    display:block;
+    font-family:'Lato',sans-serif;
+    font-size:26px;
+    color:var(--paper);
+  }
+  .stat-row .stat span{
+    font-size:12px;
+    color:var(--moss-300);
+  }
+
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+  }
+  .card h2{font-size:17px; margin-bottom:14px;}
+  .module-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .module-table th{
+    text-align:left; font-size:11.5px; text-transform:none; color:var(--ink-soft);
+    border-bottom:2px solid var(--forest-800); padding:6px 8px; font-weight:600;
+  }
+  .module-table td{padding:8px; border-bottom:1px solid var(--line);}
+  .module-table td:last-child, .module-table th:last-child{text-align:right;}
+  .module-table tr.total-row td{font-weight:700; color:var(--forest-800); border-bottom:none; border-top:1.5px solid var(--forest-800);}
+  .level-list{display:flex; flex-direction:column; gap:12px;}
+  .level-row{border:1px solid var(--line); border-radius:8px; padding:12px 14px;}
+  .level-row-head{display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:14px;}
+  .level-row-head .dot{width:12px; height:12px; border-radius:50%;}
+  .level-row p{margin:0; font-size:13px; color:var(--ink-soft); line-height:1.5;}
+  .level-row.c0{background:#faf1ef;}
+  .level-row.c1{background:#fbf3e7;}
+  .level-row.c2{background:#fbf7e4;}
+  .level-row.c3{background:#eef4ec;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+    font-weight:600;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:14.5px;
+    font-family:inherit;
+    background:var(--parchment);
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus, textarea:focus{
+    outline:2px solid var(--moss-500);
+    outline-offset:1px;
+  }
+  .field-row{display:flex; gap:14px;}
+  .field-row .field{flex:1;}
+
+  .note-box{
+    background:var(--sage-100);
+    border-left:3px solid var(--moss-500);
+    padding:12px 14px;
+    border-radius:6px;
+    font-size:13px;
+    color:var(--forest-800);
+    margin-bottom:16px;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:11px 22px;
+    border-radius:8px;
+    border:none;
+    font-size:14.5px;
+    font-weight:600;
+    font-family:inherit;
+    cursor:pointer;
+    transition:transform .08s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--forest-800); color:var(--paper);}
+  .btn-primary:hover{background:var(--forest-700);}
+  .btn-ghost{background:transparent; color:var(--forest-800); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--sage-100);}
+  .btn-row{display:flex; gap:12px; margin-top:18px; flex-wrap:wrap;}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+
+  /* ---------- WIZARD ---------- */
+  .progress-wrap{margin-bottom:22px;}
+  .progress-meta{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;
+  }
+  .progress-meta b{color:var(--forest-800); font-weight:700;}
+  .progress-track{
+    height:8px; background:var(--sage-100); border-radius:99px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:linear-gradient(90deg,var(--moss-500),var(--forest-800));
+    border-radius:99px; transition:width .25s ease;
+  }
+  .module-pills{
+    display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;
+  }
+  .pill{
+    font-size:11.5px; padding:4px 10px; border-radius:99px;
+    border:1px solid var(--line); color:var(--ink-soft);
+    background:var(--paper); cursor:pointer;
+  }
+  .pill.active{background:var(--forest-800); color:var(--paper); border-color:var(--forest-800);}
+  .pill.done{border-color:var(--moss-500); color:var(--moss-500);}
+
+  .q-card{position:relative;}
+  .q-code{
+    font-size:11.5px; letter-spacing:0.03em; color:var(--moss-500);
+    font-weight:700; margin-bottom:8px;
+  }
+  .q-text{
+    font-size:19px; font-family:'Lato',sans-serif; color:var(--forest-900);
+    line-height:1.4; margin-bottom:20px;
+  }
+
+  .choice-grid{display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:18px;}
+  .choice{
+    display:flex; align-items:flex-start; gap:12px;
+    border:1.5px solid var(--line); border-radius:8px; padding:13px 15px;
+    cursor:pointer; text-align:left; background:var(--paper);
+    font-family:inherit; font-size:14px; color:var(--ink);
+  }
+  .choice .dot{
+    width:16px; height:16px; border-radius:50%; flex:none; margin-top:2px;
+    border:2px solid var(--line);
+  }
+  .choice:hover{border-color:var(--moss-500);}
+  .choice.selected{border-color:var(--forest-800); background:var(--sage-100);}
+  .choice.selected .dot{border-color:var(--forest-800);}
+  .choice b{font-weight:700; margin-right:4px;}
+  .choice small{display:block; color:var(--ink-soft); font-weight:400; margin-top:2px;}
+
+  .c0 .dot{background:var(--red);}
+  .c1 .dot{background:var(--orange);}
+  .c2 .dot{background:var(--yellow);}
+  .c3 .dot{background:var(--green);}
+  .choice.selected.c0{background:#f6e6e3;}
+  .choice.selected.c1{background:#f7ead9;}
+  .choice.selected.c2{background:#f7f0d6;}
+  .choice.selected.c3{background:#e3ede3;}
+
+  textarea{
+    width:100%; min-height:64px; border:1px solid var(--line); border-radius:6px;
+    padding:10px 11px; font-family:inherit; font-size:13.5px; background:var(--parchment);
+    resize:vertical; color:var(--ink);
+  }
+  .ev-label{font-size:12px; color:var(--ink-soft); font-weight:600; margin-bottom:6px; display:block;}
+
+  .nav-row{display:flex; justify-content:space-between; margin-top:22px; gap:10px;}
+
+  /* ---------- RESULTS / PANEL DE CONTROL ---------- */
+  .score-hero{
+    background:var(--forest-800); color:var(--paper); border-radius:var(--radius);
+    padding:30px 28px; display:flex; align-items:center; gap:28px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .score-ring{
+    width:110px; height:110px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; flex:none;
+    background:conic-gradient(var(--gold) calc(var(--pct)*1%), rgba(255,255,255,0.15) 0);
+  }
+  .score-ring-inner{
+    width:86px; height:86px; border-radius:50%; background:var(--forest-800);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .score-ring-inner b{font-family:'Lato',sans-serif; font-size:24px;}
+  .score-ring-inner span{font-size:10.5px; color:var(--sage-100);}
+  .score-hero-text h2{color:var(--paper); font-size:20px;}
+  .score-hero-text p{color:var(--sage-100); font-size:13.5px; margin-top:6px; max-width:44ch;}
+  .level-tag{
+    display:inline-block; margin-top:10px; padding:5px 12px; border-radius:99px;
+    font-size:12.5px; font-weight:700; background:rgba(255,255,255,0.12); color:var(--paper);
+  }
+
+  .module-row{
+    display:grid; grid-template-columns:1fr 90px 90px; gap:12px; align-items:center;
+    padding:12px 0; border-bottom:1px solid var(--line);
+  }
+  .module-row:last-child{border-bottom:none;}
+  .module-name{font-size:13.5px; font-weight:600; color:var(--forest-900);}
+  .module-sub{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .bar-track{height:9px; background:var(--sage-100); border-radius:99px; overflow:hidden; display:flex;}
+  .bar-fill{height:100%;}
+  .module-pct{font-size:12.5px; font-weight:700; text-align:right; color:var(--forest-800);}
+
+  .actions-row{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;}
+
+  footer{
+    text-align:center; font-size:11.5px; color:var(--ink-soft); margin-top:40px;
+  }
+
+  @media print{
+    .no-print{display:none !important;}
+    body{background:#fff;}
+    .card, .score-hero{box-shadow:none; border:1px solid #ccc;}
+  }
+
+  @media (max-width:560px){
+    .field-row{flex-direction:column;}
+    .module-row{grid-template-columns:1fr; row-gap:6px;}
+    .module-pct{text-align:left;}
+  }
+
+  /* ---------- Versión 2.0: componentes nuevos ---------- */
+  :focus-visible{outline:2px solid var(--moss-500); outline-offset:2px;}
+  .muted{color:var(--ink-soft); font-size:13px; margin:0 0 10px;}
+  .body{font-size:13.5px; line-height:1.6; margin:0 0 10px;}
+  .scroll-x{overflow-x:auto;}
+  .resume-card{border-left:4px solid var(--gold);}
+
+  details.method{border-top:1px solid var(--line); padding:10px 0;}
+  details.method:last-child{padding-bottom:0;}
+  details.method summary{cursor:pointer; font-weight:700; color:var(--forest-800); font-size:14px;}
+  details.method p{font-size:13px; line-height:1.6; margin:10px 0 0;}
+  .gloss-list{margin:10px 0 0; font-size:13px;}
+  .gloss-list dt{font-weight:700; color:var(--forest-900); margin-top:8px;}
+  .gloss-list dd{margin:2px 0 0; color:var(--ink-soft);}
+
+  .mode-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;}
+  .mode{border:1.5px solid var(--line); border-radius:8px; padding:14px 16px; background:var(--paper); text-align:left; cursor:pointer; font-family:inherit; color:var(--ink);}
+  .mode b{display:block; font-size:15px; color:var(--forest-900); margin-bottom:4px;}
+  .mode span{font-size:12.5px; color:var(--ink-soft); line-height:1.45;}
+  .mode.selected{border-color:var(--forest-800); background:var(--sage-100); box-shadow:inset 0 0 0 1px var(--forest-800);}
+
+  .q-code{display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:space-between;}
+  .q-num{color:var(--ink-soft); font-weight:600;}
+  .term{font:inherit; color:inherit; background:none; border:none; padding:0; cursor:help; border-bottom:2px dotted var(--forest-800);}
+  .term:hover{background:var(--sage-100);}
+  .gloss-box{background:#fff8e6; border-left:3px solid var(--gold); border-radius:6px; padding:10px 12px; font-size:13px; margin:-8px 0 16px;}
+  .scale-hint{font-size:12px; color:var(--ink-soft); margin-bottom:8px;}
+  .choice{position:relative;}
+  .choice small{font-size:12.5px;}
+  .choice kbd{margin-left:auto; font-family:inherit; font-size:11px; color:var(--ink-soft); border:1px solid var(--line); border-radius:4px; padding:0 5px; align-self:center;}
+  .cna .dot{background:#b9c3c1;}
+  .choice.selected.cna{background:#eef1f0;}
+  #na-box{margin-bottom:14px;}
+  .ev-grid{margin-top:14px;}
+  .ev-grid .field select{width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:6px; font-size:14px; font-family:inherit; background:var(--parchment); color:var(--ink);}
+  .chk-wrap{margin:4px 0 6px;}
+  fieldset.chk{border:1px solid var(--line); border-radius:8px; padding:8px 12px 10px; margin:8px 0 0;}
+  fieldset.chk legend{font-size:12px; font-weight:700; color:var(--forest-800); padding:0 4px;}
+  fieldset.chk label{display:flex; gap:8px; align-items:flex-start; font-size:13px; padding:3px 0; cursor:pointer;}
+  .warn{background:#fdf0ec; border-left:3px solid var(--red); border-radius:6px; padding:10px 12px; font-size:13px; color:#7a2a2b; margin:12px 0;}
+  .refs{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;}
+  .chip{font-size:11.5px; padding:3px 9px; border-radius:99px; background:var(--sage-100); color:var(--forest-900);}
+  .chip-req{background:#dff3ee; color:var(--forest-900); box-shadow:inset 0 0 0 1px var(--moss-500);}
+  .chip-vol{background:#fff6dc; color:#6b4f00;}
+  .chip-bp, .chip-int{background:#eef1f0; color:var(--ink-soft);}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .nav-row{display:flex; justify-content:space-between; gap:12px; margin-top:18px; flex-wrap:wrap;}
+
+  .profile{display:grid; grid-template-columns:260px 1fr; gap:18px; align-items:center;}
+  .radar{width:100%; height:auto;}
+  .rd-ring{fill:none; stroke:var(--line); stroke-width:1;}
+  .rd-axis{stroke:var(--line); stroke-width:1;}
+  .rd-label{font-size:12px; font-weight:700; fill:var(--forest-900); font-family:'Lato',sans-serif;}
+  .rd-cur{fill:rgba(8,184,156,0.28); stroke:var(--forest-800); stroke-width:2;}
+  .rd-prev{fill:none; stroke:var(--gold); stroke-width:2; stroke-dasharray:5 4;}
+  .legend{font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:6px; justify-content:center;}
+  .lg{display:inline-block; width:16px; height:3px; margin-left:8px;}
+  .lg.cur{background:var(--forest-800);}
+  .lg.prev{background:var(--gold);}
+  .mod-rows .module-row{grid-template-columns:1fr 80px 70px;}
+  .linklike{background:none; border:none; padding:0; font:inherit; text-align:left; cursor:pointer;}
+  .linklike:hover{text-decoration:underline;}
+  .delta{display:block; font-size:11px; font-weight:700; color:var(--ink-soft);}
+  .delta.up{color:var(--green);}
+  .delta.down{color:var(--red);}
+  .bar-track.wide{height:10px; margin-top:6px;}
+
+  .road-step{border-left:3px solid var(--forest-800); padding:2px 0 2px 14px; margin-top:16px;}
+  .road-step h3{font-size:14.5px; margin-bottom:6px;}
+  .gap-list{margin:0; padding-left:18px; font-size:13.5px; line-height:1.5;}
+  .gap-list li{margin:5px 0;}
+  .gap-code{font-weight:700; color:var(--forest-800); margin-right:4px;}
+  h3.sub{font-size:14px; margin:12px 0 8px;}
+  .consent{display:flex; gap:10px; align-items:flex-start; font-size:13px; margin-bottom:6px; cursor:pointer;}
+
+  @media (max-width:560px){
+    .mode-grid{grid-template-columns:1fr;}
+    .profile{grid-template-columns:1fr;}
+    .radar-wrap{max-width:300px; margin:0 auto;}
+    .mod-rows .module-row{grid-template-columns:1fr;}
+    .choice kbd{display:none;}
+  }
+  @media print{
+    details.method{display:none;}
+    .road-step, .module-row{break-inside:avoid;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============================================================
+   CONFIGURACIÓN — conexión gratuita a Google Sheets (opcional)
+   1. Cree una Google Sheet y en Extensiones > Apps Script pegue
+      el código del receptor de respuestas.
+   2. Publique el Apps Script como "Web App" y copie la URL.
+   3. Pegue esa URL aquí abajo, entre las comillas, ANTES de
+      compartir este archivo con las instituciones.
+   Si la deja vacía, la herramienta funciona igual; el envío
+   queda deshabilitado y los resultados se exportan en JSON o CSV.
+   NOTA: la versión 2.0 envía una estructura de datos distinta a
+   la versión anterior (ver función buildPayload). Ajuste el
+   Apps Script si ya estaba en uso.
+   ============================================================ */
+const SHEETS_ENDPOINT_URL = "";
+
+const TOOL_VERSION = "2.0";
+const STORAGE_KEY = "saras_segundo_piso_v2";
+
+/* Parámetros metodológicos (documentados en la pantalla inicial) */
+const MIN_COVERAGE = 0.8;                 // cobertura mínima para asignar nivel
+const MODULE_WEIGHTS = {POL:1, GOB:1, GES:1, IFI:1, DIV:1, MCO:1}; // ponderación del resultado global
+const THRESHOLDS = [0.33, 0.67, 0.9];     // cortes entre niveles 0-1, 1-2 y 2-3
+const HORIZONS = {1:"0 a 6 meses", 2:"6 a 12 meses", 3:"12 a 24 meses"};
+
+const MODULES = [
+ {
+  "code": "POL",
+  "desc": "1. Política ASC",
+  "dimensions": [
+   {
+    "title": "A. Existencia y formalización",
+    "questions": [
+     {
+      "code": "POL-1",
+      "q": "¿La institución cuenta con una Política de Gestión Ambiental y Social, incluidos los aspectos climáticos, formalmente documentada y vigente?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1 Consideraciones generales",
+       "IFC ND1: Política"
+      ],
+      "accion": "Elaborar la Política de Gestión Ambiental y Social, incluidos los aspectos climáticos, con alcance sobre las operaciones de redescuento.",
+      "h": 1,
+      "express": true,
+      "orig": "POL-1"
+     },
+     {
+      "code": "POL-2",
+      "q": "¿La política ha sido aprobada por la Junta Directiva o el órgano equivalente de gobierno corporativo?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Política"
+      ],
+      "accion": "Presentar la política a la Junta Directiva para su aprobación y dejar constancia en acta.",
+      "h": 1,
+      "express": true,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-2"
+     },
+     {
+      "code": "POL-3",
+      "q": "¿La política establece una periodicidad para su revisión y actualización?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Política"
+      ],
+      "accion": "Definir en la política la periodicidad de revisión y el responsable de proponer actualizaciones.",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-3"
+     },
+     {
+      "code": "POL-4",
+      "q": "¿Existen registros o evidencias de que la política ha sido revisada conforme a dicha periodicidad?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Política"
+      ],
+      "accion": "Documentar cada revisión de la política (fecha, cambios e instancia que la aprueba).",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "POL-3",
+       "when": 0
+      },
+      "orig": "POL-4"
+     }
+    ]
+   },
+   {
+    "title": "B. Alcance y compromisos",
+    "questions": [
+     {
+      "code": "POL-5",
+      "q": "¿La política define explícitamente el alcance del SARAS, incluyendo productos, líneas de negocio y tipos de operaciones?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.2 Ámbito de aplicación",
+       "IFC ND1: Política"
+      ],
+      "accion": "Precisar en la política los productos, líneas de negocio y tipos de operación cubiertos por el SARAS.",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-5"
+     },
+     {
+      "code": "POL-6",
+      "q": "¿La política aplica tanto a operaciones de crédito como a inversiones, garantías u otros instrumentos financieros?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.3.a Proporcionalidad (crédito e IOE)",
+       "IFC ND1: Política"
+      ],
+      "accion": "Extender el alcance de la política a las garantías, inversiones u otros instrumentos que ofrezca la entidad.",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-6"
+     },
+     {
+      "code": "POL-7",
+      "q": "¿La política contempla la evaluación de riesgos ambientales, sociales y climáticos de las actividades financiadas?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1 Consideraciones generales",
+       "Cap. XXXIII, 1.1 Factores de riesgo",
+       "IFC ND1: Política",
+       "TCFD: Gestión de riesgos"
+      ],
+      "accion": "Incluir en la política la evaluación explícita de riesgos ambientales, sociales y climáticos.",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-7"
+     },
+     {
+      "code": "POL-8",
+      "q": "¿La política establece criterios diferenciados para operaciones con distintos niveles de riesgo ambiental y social?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC ND1: Política"
+      ],
+      "accion": "Establecer criterios diferenciados por nivel de riesgo (por ejemplo, categorías alto, medio y bajo).",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-8"
+     },
+     {
+      "code": "POL-9",
+      "q": "¿La política incluye compromiso explícito con el cumplimiento de la legislación ambiental y social aplicable?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Política"
+      ],
+      "accion": "Incorporar el compromiso explícito de cumplir la legislación ambiental y social aplicable.",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-9"
+     },
+     {
+      "code": "POL-10",
+      "q": "¿La política incorpora el compromiso de identificar, evaluar, mitigar, monitorear y reportar riesgos ambientales y sociales?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1 Consideraciones generales",
+       "IFC ND1: Política"
+      ],
+      "accion": "Incluir el compromiso de identificar, evaluar, mitigar, monitorear y reportar los riesgos ASC.",
+      "h": 1,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      },
+      "orig": "POL-10"
+     }
+    ]
+   },
+   {
+    "title": "C. Contenidos específicos del segundo piso",
+    "questions": [
+     {
+      "code": "POL-11",
+      "q": "¿La política define una Lista de Exclusión aplicable a las operaciones de redescuento, consistente con la normativa nacional y con listas internacionales de referencia?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Política"
+      ],
+      "accion": "Adoptar una Lista de Exclusión aplicable al redescuento, consistente con la normativa nacional y con listas internacionales de referencia.",
+      "h": 1,
+      "express": true,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      }
+     },
+     {
+      "code": "POL-12",
+      "q": "¿La política define el apetito de riesgo ambiental, social y climático de la entidad?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.3 Proporcionalidad",
+       "Cap. XXXIII, 1.5.1 Identificación",
+       "TCFD: Estrategia"
+      ],
+      "accion": "Definir el apetito de riesgo ASC y climático y someterlo a aprobación de la Junta Directiva.",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      }
+     },
+     {
+      "code": "POL-13",
+      "q": "¿La política incorpora consideraciones sobre biodiversidad, capital natural o servicios ecosistémicos?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.1 Factores de riesgo",
+       "IFC ND6",
+       "TNFD"
+      ],
+      "accion": "Incorporar en la política consideraciones sobre biodiversidad, capital natural y servicios ecosistémicos.",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      }
+     },
+     {
+      "code": "POL-14",
+      "q": "¿La política distingue las responsabilidades de la entidad, de los intermediarios financieros y de los beneficiarios finales en la gestión de riesgos ASC?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC ND1: Política",
+       "IFC Nota IF"
+      ],
+      "accion": "Delimitar en la política las responsabilidades de la entidad, de los intermediarios financieros y de los beneficiarios finales.",
+      "h": 1,
+      "express": true,
+      "dep": {
+       "code": "POL-1",
+       "when": 0
+      }
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "GOB",
+  "desc": "2. Gobernanza y Capacidades",
+  "dimensions": [
+   {
+    "title": "A. Junta Directiva y Alta Gerencia",
+    "questions": [
+     {
+      "code": "GOB-1",
+      "q": "¿La Junta Directiva tiene asignada formalmente la responsabilidad de supervisar el SARAS, incluida la gestión del riesgo climático?",
+      "t": "bin",
+      "refs": [
+       "TCFD: Gobernanza"
+      ],
+      "accion": "Asignar formalmente a la Junta Directiva la supervisión del SARAS y del riesgo climático en su reglamento o en la política.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "GOB-2",
+      "q": "¿La Junta Directiva y la Alta Gerencia reciben información periódica sobre la exposición y el desempeño del SARAS y la usan en sus decisiones?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.7 Reportes",
+       "TCFD: Gobernanza"
+      ],
+      "accion": "Establecer un reporte periódico del SARAS a la Junta Directiva y a la Alta Gerencia con indicadores de exposición y desempeño.",
+      "h": 1,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "B. Estructura y recursos",
+    "questions": [
+     {
+      "code": "GOB-3",
+      "q": "¿Existe un responsable o área formalmente designada para el SARAS, con línea de reporte a la Alta Gerencia?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.7 Reportes",
+       "IFC ND1: Capacidad organizativa"
+      ],
+      "accion": "Designar formalmente un responsable del SARAS con línea de reporte a la Alta Gerencia.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "GOB-4",
+      "q": "¿La función responsable del SARAS tiene independencia para emitir conceptos técnicos sobre las operaciones y los intermediarios?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Capacidad organizativa"
+      ],
+      "accion": "Documentar la independencia técnica de la función SARAS frente a las áreas comerciales.",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "GOB-3",
+       "when": 0
+      }
+     },
+     {
+      "code": "GOB-5",
+      "q": "¿Los recursos humanos, tecnológicos y presupuestales asignados al SARAS son proporcionales a la exposición identificada?",
+      "t": "mad",
+      "refs": [
+       "IFC ND1: Capacidad organizativa"
+      ],
+      "accion": "Dimensionar los recursos del SARAS según la exposición identificada e incluirlos en el presupuesto anual.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "C. Decisión y escalamiento",
+    "questions": [
+     {
+      "code": "GOB-6",
+      "q": "¿Los resultados de la evaluación ASC se consideran en la aprobación de cupos y operaciones con intermediarios financieros?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Incorporar el concepto ASC como insumo obligatorio en los comités de aprobación de cupos y operaciones.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "GOB-7",
+      "q": "¿Existe un mecanismo documentado de escalamiento para los casos de alto riesgo ASC y para las excepciones a la política?",
+      "t": "bin",
+      "refs": [
+       "Buena práctica"
+      ],
+      "accion": "Documentar el procedimiento de escalamiento de casos de alto riesgo y de aprobación de excepciones.",
+      "h": 1,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "D. Integración y control",
+    "questions": [
+     {
+      "code": "GOB-8",
+      "q": "¿El SARAS está integrado al marco de gestión integral de riesgos de la entidad (crédito, operacional, legal y reputacional)?",
+      "t": "mad",
+      "refs": [
+       "CE 015, instrucción segunda (control interno)",
+       "TCFD: Gestión de riesgos"
+      ],
+      "accion": "Integrar el riesgo ASC en el marco de gestión integral de riesgos y en los mapas de riesgo de la entidad.",
+      "h": 2,
+      "express": false
+     },
+     {
+      "code": "GOB-9",
+      "q": "¿La auditoría interna incluye revisiones periódicas del SARAS en su plan de trabajo?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Seguimiento"
+      ],
+      "accion": "Incluir el SARAS en el plan anual de auditoría interna.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "E. Capacidades internas",
+    "questions": [
+     {
+      "code": "GOB-10",
+      "q": "¿Existe un plan de capacitación en gestión de riesgos ASC diferenciado por rol (analistas, responsable del SARAS, Alta Gerencia y Junta Directiva), que incluya inducción para personal nuevo?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.6 Capacitación interna",
+       "IFC ND1: Capacidad organizativa"
+      ],
+      "accion": "Diseñar un plan de capacitación ASC por rol, con inducción para el personal nuevo.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "GOB-11",
+      "q": "¿El programa de capacitación mide sus resultados mediante evaluaciones o indicadores?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.6 Capacitación interna",
+       "IFC ND1: Capacidad organizativa"
+      ],
+      "accion": "Definir evaluaciones o indicadores para medir los resultados de la capacitación.",
+      "h": 3,
+      "express": false,
+      "dep": {
+       "code": "GOB-10",
+       "when": 0
+      }
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "GES",
+  "desc": "3. Gestión de Riesgos ASC",
+  "dimensions": [
+   {
+    "title": "A. Proporcionalidad y materialidad",
+    "questions": [
+     {
+      "code": "GES-1",
+      "q": "¿La entidad ha documentado cómo aplica los principios de proporcionalidad y relevancia (tamaño, complejidad y modelo de negocio) para definir el alcance de su gestión de riesgos ASC?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.3 Proporcionalidad",
+       "Cap. XXXIII, 1.4 Relevancia y materialidad"
+      ],
+      "accion": "Documentar la aplicación de los principios de proporcionalidad y relevancia, incluidas las exclusiones justificadas.",
+      "h": 2,
+      "express": false
+     },
+     {
+      "code": "GES-2",
+      "q": "¿La entidad ha definido umbrales de materialidad formalizados y los revisa ante cambios del mercado o del portafolio?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.4 Relevancia y materialidad",
+       "Cap. XXXIII, 1.5.1 Identificación"
+      ],
+      "accion": "Definir, formalizar y comunicar umbrales de materialidad, con un calendario de revisión.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "B. Identificación",
+    "questions": [
+     {
+      "code": "GES-3",
+      "q": "¿La entidad ha identificado los factores de riesgo ambiental, social y climático relevantes para su portafolio?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.1 Factores de riesgo",
+       "Cap. XXXIII, 1.5.1 Identificación",
+       "IFC ND1: Identificación de riesgos",
+       "TCFD: Gestión de riesgos"
+      ],
+      "accion": "Levantar un inventario de factores de riesgo ASC y climático por sector del portafolio.",
+      "h": 2,
+      "express": true,
+      "checklist": [
+       {
+        "grupo": "Social",
+        "items": [
+         "Reasentamiento involuntario",
+         "Conflicto armado o afectación al orden público",
+         "Atentados contra la vida o la integridad de las personas",
+         "Afectación a pueblos étnicos o grupos vulnerables",
+         "Prácticas laborales que no cumplen la normativa aplicable"
+        ]
+       },
+       {
+        "grupo": "Ambiental",
+        "items": [
+         "Pérdida de biodiversidad",
+         "Pérdida de capital natural o de servicios ecosistémicos",
+         "Gestión de residuos",
+         "Degradación del suelo",
+         "Deforestación",
+         "Contaminación"
+        ]
+       },
+       {
+        "grupo": "Climático",
+        "items": [
+         "Riesgo físico (cambios en patrones meteorológicos y fenómenos climáticos extremos)",
+         "Riesgo de transición (cambios regulatorios, tecnológicos o en las preferencias del mercado)"
+        ]
+       }
+      ]
+     },
+     {
+      "code": "GES-4",
+      "q": "¿La entidad ha identificado los sectores económicos y territorios del portafolio redescontado con mayor exposición ambiental, social y climática?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.1 Identificación",
+       "TCFD: Estrategia"
+      ],
+      "accion": "Construir un mapa de exposición por sector económico y territorio del portafolio redescontado.",
+      "h": 2,
+      "express": true
+     }
+    ]
+   },
+   {
+    "title": "C. Medición",
+    "questions": [
+     {
+      "code": "GES-5",
+      "q": "¿La entidad evalúa, con una metodología documentada, cómo los factores de riesgo identificados pueden afectar su situación financiera?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.2 Medición",
+       "TCFD: Estrategia"
+      ],
+      "accion": "Adoptar una metodología documentada para estimar el efecto financiero de los factores de riesgo.",
+      "h": 2,
+      "express": false
+     },
+     {
+      "code": "GES-6",
+      "q": "¿La entidad cuantifica el valor de los activos del portafolio expuestos a sectores vulnerables a riesgos climáticos y ASC, usando indicadores reconocidos?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.2 Medición",
+       "Cap. XXXIII, Anexo 1 Indicadores (voluntario)",
+       "TCFD: Métricas y metas"
+      ],
+      "accion": "Calcular la exposición del portafolio con indicadores reconocidos, como los de referencia del Anexo 1 del Capítulo XXXIII (IERF, IRTE, IERS, PZCV).",
+      "h": 3,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "D. Control",
+    "questions": [
+     {
+      "code": "GES-7",
+      "q": "¿La entidad aplica efectivamente la Lista de Exclusión a las operaciones que redescuenta?",
+      "t": "bin",
+      "refs": [
+       "Buena práctica"
+      ],
+      "accion": "Incorporar la verificación de la Lista de Exclusión en el flujo de aprobación del redescuento.",
+      "h": 1,
+      "express": true,
+      "dep": {
+       "code": "POL-11",
+       "when": 0
+      }
+     },
+     {
+      "code": "GES-8",
+      "q": "¿Las medidas de control de la exposición ASC están documentadas en procedimientos y se actualizan ante cambios en los factores de riesgo?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.3 Control",
+       "IFC ND1: Programas de gestión"
+      ],
+      "accion": "Formalizar las medidas de control en procedimientos y revisarlas cuando cambien los factores de riesgo.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "E. Monitoreo",
+    "questions": [
+     {
+      "code": "GES-9",
+      "q": "¿La entidad hace seguimiento periódico y documentado a su exposición ASC, con responsables definidos para escalar los hallazgos?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.4 Monitoreo",
+       "IFC ND1: Seguimiento"
+      ],
+      "accion": "Establecer un procedimiento de seguimiento periódico de la exposición ASC, con responsables y reglas de escalamiento.",
+      "h": 2,
+      "express": true
+     },
+     {
+      "code": "GES-10",
+      "q": "¿La entidad cuenta con mecanismos para detectar oportunamente factores de riesgo sobrevinientes o emergentes?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.5.4 Monitoreo"
+      ],
+      "accion": "Implementar alertas para factores de riesgo sobrevinientes (por ejemplo, eventos climáticos o conflictos territoriales).",
+      "h": 3,
+      "express": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "IFI",
+  "desc": "4. Gestión de Intermediarios Financieros",
+  "dimensions": [
+   {
+    "title": "A. Evaluación del intermediario",
+    "questions": [
+     {
+      "code": "IFI-1",
+      "q": "¿La entidad evalúa el SARAS del intermediario financiero antes de asignarle o renovarle cupo?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Adoptar un formato de evaluación del SARAS del intermediario como requisito para asignar o renovar cupo.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "IFI-2",
+      "q": "¿Los requisitos de SARAS exigidos a los intermediarios son proporcionales a su tamaño, tipo y perfil de riesgo?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Escalonar los requisitos de SARAS según el tamaño, tipo y perfil de riesgo del intermediario.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "B. Condiciones contractuales",
+    "questions": [
+     {
+      "code": "IFI-3",
+      "q": "¿Los convenios o contratos de redescuento incluyen obligaciones ASC para el intermediario (aplicación de la Lista de Exclusión, cumplimiento legal, reporte y notificación de incidentes)?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Incluir cláusulas ASC estándar en los convenios de redescuento.",
+      "h": 1,
+      "express": true
+     },
+     {
+      "code": "IFI-4",
+      "q": "¿Existen consecuencias definidas y aplicadas ante incumplimientos ASC del intermediario (planes de acción, suspensión o reducción de cupo)?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)"
+      ],
+      "accion": "Definir un régimen de consecuencias por incumplimiento ASC y documentar su aplicación.",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "C. Operaciones de mayor riesgo",
+    "questions": [
+     {
+      "code": "IFI-5",
+      "q": "¿Las operaciones de alto riesgo ASC requieren revisión o no objeción previa de la entidad antes de su redescuento?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Establecer la revisión o no objeción previa para las operaciones de alto riesgo ASC.",
+      "h": 1,
+      "express": true
+     }
+    ]
+   },
+   {
+    "title": "D. Información y verificación",
+    "questions": [
+     {
+      "code": "IFI-6",
+      "q": "¿La entidad obtiene de los intermediarios información sobre el sector, el territorio y la categoría de riesgo ASC de los beneficiarios finales?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 1.5.1 Identificación",
+       "TCFD: Métricas y metas"
+      ],
+      "accion": "Incorporar en el reporte de los intermediarios campos de sector, municipio y categoría de riesgo ASC del beneficiario final.",
+      "h": 2,
+      "express": true
+     },
+     {
+      "code": "IFI-7",
+      "q": "¿La entidad verifica el cumplimiento ASC de los intermediarios mediante reportes periódicos, revisión de muestras de operaciones o visitas?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC ND1: Seguimiento"
+      ],
+      "accion": "Diseñar un programa de verificación basado en riesgo (reportes, muestreo de operaciones y visitas).",
+      "h": 2,
+      "express": false
+     }
+    ]
+   },
+   {
+    "title": "E. Fortalecimiento e incentivos",
+    "questions": [
+     {
+      "code": "IFI-8",
+      "q": "¿La entidad ofrece a sus intermediarios un programa de fortalecimiento de capacidades en gestión de riesgos ASC?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, 2.2.b Redescuento (aplicación voluntaria)",
+       "IFC Nota IF"
+      ],
+      "accion": "Ofrecer capacitación y asistencia técnica en SARAS a los intermediarios, priorizando los de mayor exposición.",
+      "h": 3,
+      "express": false
+     },
+     {
+      "code": "IFI-9",
+      "q": "¿La entidad ofrece condiciones diferenciadas de redescuento (tasa, plazo o líneas específicas) vinculadas al desempeño ASC o a actividades elegibles bajo la Taxonomía Verde de Colombia?",
+      "t": "bin",
+      "refs": [
+       "Cap. XXXIII, 1.5 Oportunidades (voluntario)",
+       "Taxonomía Verde de Colombia",
+       "TCFD: Estrategia"
+      ],
+      "accion": "Evaluar líneas o condiciones de redescuento diferenciadas para actividades elegibles bajo la Taxonomía Verde.",
+      "h": 3,
+      "express": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "DIV",
+  "desc": "5. Divulgación y Comunicación Externa",
+  "dimensions": [
+   {
+    "title": "A. Divulgación pública",
+    "questions": [
+     {
+      "code": "DIV-1",
+      "q": "¿La entidad divulga públicamente un resumen de su SARAS y reportes periódicos sobre el desempeño ASC de su portafolio?",
+      "t": "mad",
+      "refs": [
+       "IFC ND1: Comunicaciones externas"
+      ],
+      "accion": "Publicar un resumen del SARAS y un reporte periódico del desempeño ASC del portafolio.",
+      "h": 2,
+      "express": true
+     }
+    ]
+   },
+   {
+    "title": "B. Mecanismo de comunicación externa",
+    "questions": [
+     {
+      "code": "DIV-2",
+      "q": "¿La entidad cuenta con un mecanismo formal y documentado para recibir y responder consultas y quejas externas sobre asuntos ASC, con canales publicados y de fácil acceso?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Comunicaciones externas"
+      ],
+      "accion": "Implementar y publicar un mecanismo formal de comunicación externa para asuntos ASC.",
+      "h": 2,
+      "express": true
+     },
+     {
+      "code": "DIV-3",
+      "q": "¿Las comunicaciones externas se registran y se responden dentro de tiempos definidos y monitoreados?",
+      "t": "mad",
+      "refs": [
+       "IFC ND1: Comunicaciones externas"
+      ],
+      "accion": "Registrar las comunicaciones recibidas y fijar tiempos de respuesta con seguimiento.",
+      "h": 2,
+      "express": false,
+      "dep": {
+       "code": "DIV-2",
+       "when": 0
+      }
+     },
+     {
+      "code": "DIV-4",
+      "q": "¿El mecanismo contempla medidas de accesibilidad para grupos vulnerables (idioma local, canales no digitales, confidencialidad)?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Comunicaciones externas"
+      ],
+      "accion": "Incorporar al mecanismo canales no digitales, idioma local y garantías de confidencialidad.",
+      "h": 3,
+      "express": false,
+      "dep": {
+       "code": "DIV-2",
+       "when": 0
+      }
+     }
+    ]
+   },
+   {
+    "title": "C. Exigencias a los intermediarios",
+    "questions": [
+     {
+      "code": "DIV-5",
+      "q": "¿La entidad exige a los intermediarios que los beneficiarios finales con operaciones de alto riesgo cuenten con mecanismos de quejas accesibles para comunidades y trabajadores?",
+      "t": "bin",
+      "refs": [
+       "IFC Nota IF",
+       "IFC ND1: Comunicaciones externas"
+      ],
+      "accion": "Incluir en los convenios con intermediarios el requisito de mecanismos de quejas para las operaciones de alto riesgo.",
+      "h": 3,
+      "express": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "MCO",
+  "desc": "6. Mejora Continua",
+  "dimensions": [
+   {
+    "title": "A. Proceso de mejora continua",
+    "questions": [
+     {
+      "code": "MCO-1",
+      "q": "¿Los hallazgos de auditorías sobre el SARAS se traducen en planes de acción con responsables y fechas de cierre?",
+      "t": "mad",
+      "refs": [
+       "IFC ND1: Seguimiento"
+      ],
+      "accion": "Vincular cada hallazgo de auditoría del SARAS a un plan de acción con responsable y fecha de cierre.",
+      "h": 2,
+      "express": true,
+      "orig": "MCO-4"
+     },
+     {
+      "code": "MCO-2",
+      "q": "¿La retroalimentación de grupos de interés externos se incorpora como insumo para mejorar el SARAS?",
+      "t": "mad",
+      "refs": [
+       "IFC ND1: Participación de actores"
+      ],
+      "accion": "Analizar periódicamente la retroalimentación externa y reflejar los ajustes en el SARAS.",
+      "h": 3,
+      "express": false,
+      "orig": "MCO-5"
+     },
+     {
+      "code": "MCO-3",
+      "q": "¿Los cambios regulatorios o normativos aplicables generan actualizaciones al SARAS?",
+      "t": "bin",
+      "refs": [
+       "Buena práctica"
+      ],
+      "accion": "Asignar la vigilancia normativa y la actualización del SARAS ante cambios regulatorios.",
+      "h": 2,
+      "express": false,
+      "orig": "MCO-6"
+     },
+     {
+      "code": "MCO-4",
+      "q": "¿El SARAS ha evolucionado en los últimos dos años incorporando mejoras concretas en metodologías, herramientas o procedimientos?",
+      "t": "bin",
+      "refs": [
+       "IFC ND1: Seguimiento"
+      ],
+      "accion": "Programar una revisión integral del SARAS con mejoras documentadas en metodologías y herramientas.",
+      "h": 3,
+      "express": false,
+      "orig": "MCO-7"
+     },
+     {
+      "code": "MCO-5",
+      "q": "¿El SARAS cuenta con indicadores clave de desempeño y de exposición ASC y climática, definidos y monitoreados regularmente?",
+      "t": "mad",
+      "refs": [
+       "Cap. XXXIII, Anexo 1 Indicadores (voluntario)",
+       "TCFD: Métricas y metas"
+      ],
+      "accion": "Definir un tablero de indicadores de desempeño y exposición ASC y climática, tomando como referencia el Anexo 1 del Capítulo XXXIII.",
+      "h": 2,
+      "express": true
+     }
+    ]
+   }
+  ]
+ }
+];
+const MODULE_LEVELS = {
+ "POL": [
+  "No existe una política ASC formal para las operaciones de redescuento.",
+  "Existe una política en borrador o sin aprobación de la Junta Directiva, o con alcance y compromisos incompletos.",
+  "La política está aprobada y define alcance, compromisos, Lista de Exclusión y responsabilidades de la entidad y de los intermediarios; se revisa periódicamente.",
+  "La política se actualiza con base en lecciones aprendidas, incorpora clima y naturaleza, y orienta decisiones estratégicas (apetito de riesgo, líneas de redescuento, fondeo)."
+ ],
+ "GOB": [
+  "No hay estructura de gobierno para el SARAS: no existe responsable, instancia de decisión ni supervisión de la Junta Directiva.",
+  "Existe un responsable informal o funciones aisladas, sin reportes periódicos a la Alta Gerencia o a la Junta ni capacitación estructurada.",
+  "Los roles, las instancias de decisión y las líneas de reporte están documentados; la Junta supervisa el SARAS y hay capacitación por rol.",
+  "La función SARAS opera con independencia técnica y recursos proporcionales, es objeto de auditoría y sus resultados orientan la estrategia."
+ ],
+ "GES": [
+  "No se identifican ni se miden los riesgos ASC y climáticos del portafolio.",
+  "Hay identificaciones puntuales de algunos riesgos, sin metodología, umbrales de materialidad ni seguimiento sistemático.",
+  "La entidad identifica, mide, controla y monitorea sistemáticamente la exposición del portafolio, con umbrales de materialidad documentados.",
+  "La entidad cuantifica su exposición con indicadores reconocidos, detecta riesgos sobrevinientes y ajusta su apetito de riesgo con base en los datos."
+ ],
+ "IFI": [
+  "No se evalúa el SARAS de los intermediarios ni se les exigen condiciones ASC.",
+  "Existen requisitos aislados (por ejemplo, una cláusula de exclusión en algunos convenios), sin evaluación previa ni verificación.",
+  "La entidad evalúa a los intermediarios antes de asignar cupo, incluye obligaciones ASC en los convenios y verifica su cumplimiento.",
+  "La entidad tiene visibilidad del beneficiario final, fortalece las capacidades de los intermediarios y usa incentivos para promover mejores prácticas."
+ ],
+ "DIV": [
+  "La entidad no divulga su gestión ASC ni cuenta con un mecanismo para recibir comunicaciones externas.",
+  "Hay divulgación puntual o un canal general de PQRS que no da tratamiento específico a los asuntos ASC.",
+  "La entidad divulga periódicamente su desempeño ASC y cuenta con un mecanismo documentado, accesible y con tiempos de respuesta definidos.",
+  "La divulgación es proactiva, el mecanismo es accesible para grupos vulnerables y la exigencia se extiende a través de los intermediarios."
+ ],
+ "MCO": [
+  "No hay revisión periódica del SARAS ni indicadores de desempeño.",
+  "Se hacen ajustes puntuales cuando surgen problemas, sin indicadores ni proceso formal.",
+  "Existen indicadores definidos y planes de acción derivados de auditorías, con un ciclo de mejora documentado.",
+  "El SARAS mejora de forma continua con base en datos, retroalimentación externa y cambios regulatorios."
+ ]
+};
+
+const LEVELS = [
+  {v:0, label:"Incipiente o Ausente", cls:"c0", sub:"No hay SARAS formal. Las consideraciones ambientales y sociales en el redescuento, si existen, son ad hoc; no hay política aprobada, responsable designado ni requisitos ASC para los intermediarios financieros."},
+  {v:1, label:"Básico o Reactivo", cls:"c1", sub:"Existen elementos aislados (por ejemplo, una Lista de Exclusión o una cláusula en algunos convenios), pero no están integrados a la evaluación de intermediarios ni al sistema de administración de riesgos. Se actúa cuando surge un problema, sin monitoreo sistemático."},
+  {v:2, label:"Estructurado o Sistemático", cls:"c2", sub:"El SARAS está documentado, aprobado por la Junta Directiva e integrado al ciclo de redescuento: evaluación del intermediario, condiciones contractuales y seguimiento. Hay roles definidos, capacitación y reportes periódicos."},
+  {v:3, label:"Avanzado u Optimizado", cls:"c3", sub:"El SARAS se gestiona con datos del portafolio redescontado hasta el beneficiario final, opera bajo mejora continua, fortalece e incentiva a los intermediarios y es verificable externamente. La información orienta decisiones estratégicas."},
+];
+
+const BIN_OPTS = [
+  {v:1,   label:"Sí",           sub:"La práctica existe, está formalizada y se aplica.", cls:"c3"},
+  {v:0.5, label:"Parcialmente", sub:"Existe en borrador, sin aprobación o con cobertura incompleta.", cls:"c2"},
+  {v:0,   label:"No",           sub:"La práctica no existe.", cls:"c0"},
+];
+const MAD_OPTS = [
+  {v:0, label:"Inexistente", sub:"No se realiza.", cls:"c0"},
+  {v:1, label:"Inicial",     sub:"Se realiza de forma puntual o informal, sin documentación.", cls:"c1"},
+  {v:2, label:"Establecido", sub:"Está documentado y se aplica de forma consistente.", cls:"c2"},
+  {v:3, label:"Optimizado",  sub:"Se mide, se revisa periódicamente y orienta decisiones.", cls:"c3"},
+];
+const NA_OPT = {v:"na", label:"No aplica", sub:"No corresponde al modelo de negocio de la entidad. Requiere justificación.", cls:"cna"};
+
+const SOPORTES = ["Documento aprobado (política, manual)", "Acta de Junta Directiva o comité", "Procedimiento, formato o herramienta", "Contrato o convenio", "Reporte, registro o base de datos", "Otro"];
+
+const GLOSSARY = [
+  {k:"apetito de riesgo", re:"apetito de riesgo", d:"Nivel y tipo de riesgo que la entidad está dispuesta a asumir para cumplir sus objetivos, aprobado por la Junta Directiva."},
+  {k:"Lista de Exclusión", re:"Lista de Exclusión", d:"Relación de actividades que la entidad no financia ni redescuenta bajo ninguna circunstancia."},
+  {k:"materialidad", re:"materialidad", d:"Umbrales que define la entidad, con base en su apetito de riesgo, para determinar qué productos, servicios o activos tienen alta exposición y cuáles pueden excluirse de la gestión del riesgo (Cap. XXXIII, 1.4 y 1.5.1)."},
+  {k:"relevancia", re:"principios? de (?:proporcionalidad y )?relevancia", d:"Principio según el cual la entidad no está obligada a aplicar la gestión del riesgo a productos y servicios con baja exposición (Cap. XXXIII, 1.4)."},
+  {k:"riesgo físico", re:"riesgos? (?:climáticos? )?físicos?", d:"Impactos directos e indirectos ocasionados por cambios en los patrones meteorológicos y por fenómenos climáticos extremos (Cap. XXXIII, 1.1)."},
+  {k:"riesgo de transición", re:"riesgos? de transición", d:"Impactos derivados de la adaptación hacia una economía con bajas emisiones de carbono, incluidos cambios regulatorios, tecnológicos o en las preferencias del mercado (Cap. XXXIII, 1.1)."},
+  {k:"proporcionalidad", re:"proporcionalidad", d:"Principio según el cual la gestión del riesgo se apoya en la información razonablemente disponible y es coherente con el perfil y el apetito de riesgo, el modelo de negocio y la naturaleza, tamaño y complejidad de la entidad (Cap. XXXIII, 1.3)."},
+  {k:"redescuento", re:"redescuent\\w*|redescont\\w*", d:"Operación en la que la entidad de segundo piso entrega recursos a un intermediario financiero para que este otorgue crédito a los beneficiarios finales."},
+  {k:"intermediario financiero", re:"intermediarios? financieros?|intermediarios?", d:"Entidad de primer piso que otorga el crédito directamente al beneficiario final y accede a los recursos de redescuento."},
+  {k:"beneficiario final", re:"beneficiarios? finales?", d:"Persona o empresa que recibe el crédito del intermediario financiero con recursos de redescuento."},
+  {k:"cupo", re:"cupos?", d:"Monto máximo de recursos que la entidad de segundo piso asigna a un intermediario financiero."},
+  {k:"sobrevinientes", re:"sobrevinientes", d:"Factores de riesgo que aparecen o cambian durante la vigencia de las operaciones."},
+  {k:"no objeción", re:"no objeción", d:"Revisión previa en la que la entidad de segundo piso confirma que no tiene reparos antes de redescontar una operación."},
+  {k:"Taxonomía Verde", re:"Taxonomía Verde de Colombia|Taxonomía Verde", d:"Sistema de clasificación de actividades económicas ambientalmente sostenibles adoptado en Colombia en 2022."},
+  {k:"ASC", re:"ASC", cs:true, d:"Ambiental, social y climático."},
+  {k:"SARAS", re:"SARAS", cs:true, d:"Sistema de Administración de Riesgos Ambientales, Sociales y Climáticos."},
+];
+
+const GGGI_LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAV4AAACDBAMAAAA30m5sAAAAD1BMVEXv7+////////////////8HoFbsAAAABHRSTlMAH27XRyCDiQAACDVJREFUeNrVnGmSozgQRkHUASjgAIB1AGNzgAJ0/zNNGCOUykVS91Q0Mr8mqBzz0PIpN7ooxKu8F1VffMxV6p+i2urPwTU/RWU+Bvhmdl6zfgZwaw5es34CbmNOXjPlj6sM4M0fuJw9XjN8BK7j3bKW4VIbxJu3qllcwJuzqrWG4c1X1Ryux2seGQsvx5unqikj8uaoalbJWF6TnaqdSsbzZqdqPi7hzQ34ZiK8eclwa6K8OclwYxJ481E1RdBMz90cclSycyhzBWZwH/yizsK5RMJrpeCbB75eJDQLpfa5518lLyXbcV9r5DX3dKmsueG+OPclvfXiVsxIeF/r4FjS+7rIC1izNBos1iYrVSPDN3lrZOWn4CpVq8mhgAGnrFTtRVdhtWrE5XG5qO3nWIuEd6aLVWdyaLyH7wZPWypg5OZ1h7KnXm8yLR4fGYRy/vDxB7A9nr0FUl/Hew7fxERFbnspuAFv/XW8dvge/OF8uped+8/WXMn7Hj6iZJsvw8eaOcwu5bUul0IiAEd7mL2VcS3v24PxRWvhlse51i/mNXe3QEMH26klV/MujK9G5c1pdRa86Ggjpx0Y8et5S+o6IG8CumrX86qVcS7hLc/TzIDXEOfSwFu+PufAy5xwvRTKZcFLPAinEHjv5cHrOZfeBsOeJsP7PT6fz8cQ9NwOm3DEfns+n+OQxOv55qvDJVJMeEs7L9sox7anjUzczKGggPAC3xxsMOpp9tJjAsEd9J8edTzL7xX9ytcdyut8c+CkM55mH8q68OFdG49YUXDzSOC1mssPtMDbJIT7bUKIrdmsbpj3WLZuIW81k7nugzkXJieoEvKGbSDzJfPuRt+e8LIxcyjdTVJsnM09XpRwzwnwHukxLUTzhJcNotBsd0IYG06bg0kI8e7ALXYhJd7S3nuO381tZmdbAZvxtFk8m9MVeIzf4xM/KMi79VDJtAnyak9TTx3umY10aOppUzMr5lA6O0hrCu8Za07SdPd4eN12b+gAK8FmocP7wFLcp/CGs6keb0fWoiKDp4mCNdjmGN6JnB1rOq+Qrab7Fs1+exRIfRt/e7VIIhRd9V7olcBLk5U3yltx0rQ/aENsAyNwK5qCmtmlSyIvTVYOFeXVnPSrZJvamwKs2p177zjvgpVsKihvyXtrGu4mFbCZ4DRtxJ9w/2cSr0aHOeWtAqfv+gc2mq87dedGSOFVQigHeDV3sNoyYw1seqFqDQeyDrzTn/LuYkR5wTPpYQV29sbYdM5GSYVTbX9f4N1mnvctRoRX0WMVDNgStlFO9TopJmztHwTeVbG8u1bcKW8lxp7zOWBdgo0WpumNcA/wOkjIOxxfDGDeTnoO+IsWlsPbZkPk0juJvKe/sPglAG0YXi0+R43jONZhltNGCbv2dXC/bIK81tFwvIfXw/D65y57lTKLP+t9/GcYfXCRu+Pt4RcDkDfhOUk2X+KyisdDZ5MGvNUYmTdS2qoSbLp4G4jIe7oNgFcZnrcSt5I/djEbLSheCu/plrlbwyzwfiW0xySM3T6fP3/Lux9lGt6ajcCbwpIwdkVCBSd0Hq+I10i8Oj4uSTbm//Ga+hd557iclQlb8td477801/+CF49d+fSvB8PL2CgsvxWymX6Rty+Y1ImVGmZtMjaE94sJdT6bt/diNZ63B+HnxbyDn0JkeQeYOb2Wd0JpXI538jLTwn5jeOff532hNDArzfDuNg6Y1zOJN2SzMnr2RXrpIe87SwZzZZT3/VeX/uPPi3/Ca7NkIBdJeG0hefLDc+wblN/uao+3JO8EbKz/QdY4sJkRr8uSTSCNpVmXzbnzcX/nC/AuEd8tdGYfa87ywizZGVsgXmjTu9brsD9pWbqIzRLxJ2ef1yu0Wi7EC2sCR/kl7q/bcf2K2PxE5sByvXn9QqutBfm81EYlxEOWJRQPzaBzaA34OScvLrQetTaPF9cE9r3Xez8WYgnFm/ZPgXjTDklpTVqmowTyrsTm4T9wCY5LKJ4/XyXwTnbJWd6GKYG2gJerCUzepK/BcQnlS86lEninzsvvMFWAyYIstoys5H77TlycKB9V/04+iqutDYCXL8a6/V6JA+NG/kucbB3P95U2g3TwcnXd3vHyxVg3WmLeNiWfCmw66b0rP5/K4/SWN16MDear7+F8dZWar64BL1d32479VvANzAP+vbvwnD5YD3Ascj3AvevJyxcKLW8baRUQainemIbqLRtk/+HT64vPyzGtB29jhC/5inA9qyOlasFmCdazwNQAXqELfCmkGi35xZWtm90TbPpgvRDUFCEv2zHwagGd41/rsfXYzl+OrVyzrX2EXqzZerzMV3lySZmrtKF+HlS75urdDWooUMxwdAapTLC9huPthYPMgynJK3QERs2sMnq7o4G/7PNyX+UxvIOk+hDm+Kkt1K9x2Kyhfg2/pwPxMkpAeSe5cuV6DMeZ6X5CPTMjN12oHwb1zGBeCkx4p4BH/e6cHFwv0Sb1GwGbVe43uhnUk0R4iaphXjGRzsrhEO/nwrtBh3q+KC+2x/X5OpjijTXvJdhwHURTIfMiYNTiVUdKbBHdS7FpA6/E8eIPXFTqJ3oqQfeaBJub/Eocrw/s8UYy+k3C976o53aItf8iUWcdVyXwRj84hv3K0lyk2NyknmaeFwKj+nzkOvVSbJ2GPeOPhH5w1P911OnlNe940/41pjK1334M2zSj3G8fAl7oMZrlpZkW/Kyv2ePN/9+gPFRtSWq1yOFSoF9jKD7gak7eqSg+BfjF+yG4u6q9PuErPubSxyeSnwO8FB91lRmu3f8AK1y0GAdPxAUAAAAASUVORK5CYII=";
+
+/* ---------- Estructuras derivadas ---------- */
+const FLAT = [];
+MODULES.forEach((m, mi) => m.dimensions.forEach(d => d.questions.forEach(q => {
+  FLAT.push({...q, mi, moduleCode:m.code, moduleDesc:m.desc, dimTitle:d.title});
+})));
+const BYCODE = Object.fromEntries(FLAT.map(q => [q.code, q]));
+const N_FULL = FLAT.length;
+const N_EXPRESS = FLAT.filter(q => q.express).length;
+
+/* ---------- Estado ---------- */
+const state = {
+  screen: "intro",          // intro | wizard | moduleresults | results
+  mode: "express",          // express | completo
+  institution: {nombre:"", tipo:"", responsable:"", cargo:"", fecha:""},
+  pos: null,                // código de la pregunta actual
+  modResults: 0,
+  answers: {},              // código -> {v, just, soporte, obs, check:[]}
+  prev: null,               // diagnóstico anterior para comparar
+  notice: "",
+};
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
+function pctTxt(p){ return Math.round(p*100) + " %"; }
+
+/* ---------- Guardado automático ---------- */
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({version:TOOL_VERSION, mode:state.mode, institution:state.institution, answers:state.answers, pos:state.pos, savedAt:new Date().toISOString()}));
+  }catch(e){ /* almacenamiento no disponible: la herramienta sigue funcionando */ }
+}
+function loadSaved(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function clearSaved(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+
+/* ---------- Puntaje ---------- */
+function inMode(q, mode){ return mode === "completo" || q.express; }
+function activeQs(mode){ return FLAT.filter(q => inMode(q, mode || state.mode)); }
+
+function isDerived(q, ans){
+  ans = ans || state.answers;
+  if(!q.dep) return false;
+  const parent = BYCODE[q.dep.code];
+  if(isDerived(parent, ans)) return true;
+  const a = ans[parent.code];
+  return !!a && a.v === q.dep.when;
+}
+// Devuelve null (sin responder), "na" o un valor entre 0 y 1
+function scoreOf(q, ans){
+  ans = ans || state.answers;
+  if(isDerived(q, ans)) return 0;
+  const a = ans[q.code];
+  if(!a || a.v === undefined || a.v === null) return null;
+  if(a.v === "na") return "na";
+  return q.t === "bin" ? a.v : a.v/3;
+}
+function levelIdx(p){ return p>=THRESHOLDS[2] ? 3 : p>=THRESHOLDS[1] ? 2 : p>=THRESHOLDS[0] ? 1 : 0; }
+
+function moduleStats(mi, ans, mode){
+  const qs = activeQs(mode).filter(q => q.mi === mi);
+  let answered=0, na=0, sum=0, derived=0;
+  qs.forEach(q => {
+    const s = scoreOf(q, ans);
+    if(s === null) return;
+    if(s === "na"){ na++; return; }
+    answered++; sum += s;
+    if(isDerived(q, ans)) derived++;
+  });
+  const n = qs.length;
+  const coverage = n ? (answered+na)/n : 0;
+  return {n, answered, na, derived, pct: answered ? sum/answered : 0, coverage, determined: n>0 && answered>0 && coverage >= MIN_COVERAGE};
+}
+function globalStats(ans, mode){
+  let wsum=0, psum=0, n=0, done=0;
+  const mods = MODULES.map((m, mi) => {
+    const s = moduleStats(mi, ans, mode);
+    n += s.n; done += s.answered + s.na;
+    if(s.answered>0){ const w = MODULE_WEIGHTS[m.code] ?? 1; wsum += w; psum += w*s.pct; }
+    return s;
+  });
+  const coverage = n ? done/n : 0;
+  return {pct: wsum ? psum/wsum : 0, coverage, determined: coverage >= MIN_COVERAGE && wsum>0, done, n, mods};
+}
+
+/* ---------- Navegación ---------- */
+function navList(){ return activeQs().filter(q => !isDerived(q)); }
+function firstOfModule(mi){ return navList().find(q => q.mi === mi); }
+function currentQ(){ return BYCODE[state.pos]; }
+
+function validateCurrent(){
+  const q = currentQ(); if(!q) return true;
+  const a = state.answers[q.code];
+  if(a && a.v === "na" && !(a.just||"").trim()){
+    state.notice = "Escriba la justificación de «No aplica» antes de continuar.";
+    render(); return false;
+  }
+  return true;
+}
+function goNext(){
+  syncFields();
+  if(!validateCurrent()) return;
+  const list = navList();
+  const i = list.findIndex(q => q.code === state.pos);
+  const q = list[i];
+  const next = list[i+1];
+  if(!next || next.mi !== q.mi){ state.modResults = q.mi; state.screen = "moduleresults"; }
+  else state.pos = next.code;
+  state.notice = "";
+  render(); window.scrollTo(0,0);
+}
+function goPrev(){
+  syncFields();
+  const list = navList();
+  const i = list.findIndex(q => q.code === state.pos);
+  if(i > 0){ state.pos = list[i-1].code; state.notice=""; render(); window.scrollTo(0,0); }
+}
+function ensureAnswer(code){
+  if(!state.answers[code]) state.answers[code] = {v:null, just:"", soporte:"", obs:"", check:[]};
+  return state.answers[code];
+}
+function syncFields(){
+  const q = currentQ(); if(!q || state.screen !== "wizard") return;
+  const a = ensureAnswer(q.code);
+  const obs = document.getElementById('f-obs'); if(obs) a.obs = obs.value;
+  const sop = document.getElementById('f-soporte'); if(sop) a.soporte = sop.value;
+  const just = document.getElementById('f-just'); if(just) a.just = just.value;
+  const checks = document.querySelectorAll('.chk input');
+  if(checks.length) a.check = [...checks].filter(c => c.checked).map(c => c.value);
+}
+
+/* ---------- Referencias ---------- */
+// Requisito del Capítulo XXXIII (CBCF, adicionado por la CE 015 de 2025), referencia voluntaria o buena práctica
+function refKind(r){
+  if(/^(Cap\. XXXIII|CE 015)/.test(r)) return /voluntari/.test(r) ? "vol" : "req";
+  return r === "Buena práctica" ? "bp" : "int";
+}
+function refClass(r){ return "chip-" + refKind(r); }
+
+/* ---------- Glosario ---------- */
+function withGlossary(text){
+  let out = esc(text);
+  const hits = [];
+  GLOSSARY.forEach((g, i) => {
+    const re = new RegExp("(^|[^\\wÁÉÍÓÚÑáéíóúñ\\u0001-\\u0003])(" + g.re + ")(?![\\wÁÉÍÓÚÑáéíóúñ])", g.cs ? "" : "i");
+    // no marcar dentro de un término ya marcado
+    const parts = out.split(/(\u0001\d+\u0002[^\u0003]*\u0003)/);
+    let done = false;
+    for(let p=0; p<parts.length && !done; p+=2){
+      if(re.test(parts[p])){ parts[p] = parts[p].replace(re, (m, pre, w) => pre + "\u0001" + i + "\u0002" + w + "\u0003"); done = true; }
+    }
+    out = parts.join("");
+  });
+  return out.replace(/\u0001(\d+)\u0002([^\u0003]*)\u0003/g, (m, i, w) => `<button type="button" class="term" data-term="${i}" aria-label="Definición de ${esc(GLOSSARY[i].k)}">${w}</button>`);
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = "";
+  app.appendChild(renderBrand());
+  if(state.screen === "intro") app.appendChild(renderIntro());
+  else if(state.screen === "wizard") app.appendChild(renderWizard());
+  else if(state.screen === "moduleresults") app.appendChild(renderModuleResults());
+  else app.appendChild(renderResults());
+  app.appendChild(el(`<footer>Autodiagnóstico SARAS para instituciones de segundo piso, versión ${TOOL_VERSION}. Herramienta de autogestión de buenas prácticas; no constituye certificación de cumplimiento regulatorio.</footer>`));
+  if(state.screen !== "intro") persist();
+}
+
+function renderBrand(){
+  let tag = "";
+  if(state.screen === "wizard"){
+    const list = navList(); const i = list.findIndex(q => q.code === state.pos);
+    tag = `Pregunta ${i+1} de ${list.length}`;
+  } else if(state.screen === "moduleresults") tag = "Resultado del módulo";
+  else if(state.screen === "results") tag = state.mode === "express" ? "Diagnóstico rápido" : "Diagnóstico completo";
+  return el(`
+    <div class="brand">
+      <div class="brand-left">
+        <img class="logo" src="data:image/png;base64,${GGGI_LOGO_B64}" alt="GGGI">
+        <div class="mark">SARAS <span>Autodiagnóstico Segundo Piso</span></div>
+      </div>
+      <div class="tag no-print">${tag}</div>
+    </div>`);
+}
+
+function renderIntro(){
+  const wrap = document.createElement('div');
+  const saved = loadSaved();
+
+  wrap.appendChild(el(`
+    <div class="intro-hero">
+      <h1>Autodiagnóstico SARAS para Instituciones de Segundo Piso</h1>
+      <div class="hero-underline"></div>
+      <p>Un instrumento de autogestión, no una lista de verificación de cumplimiento normativo, para que su institución identifique su nivel de adopción de buenas prácticas ambientales, sociales y climáticas y obtenga una hoja de ruta priorizada.</p>
+      <div class="stat-row">
+        <div class="stat"><b>${MODULES.length}</b><span>módulos temáticos</span></div>
+        <div class="stat"><b>${N_EXPRESS}</b><span>preguntas en el diagnóstico rápido</span></div>
+        <div class="stat"><b>${N_FULL}</b><span>preguntas en el diagnóstico completo</span></div>
+      </div>
+    </div>`));
+
+  if(saved && saved.answers && Object.keys(saved.answers).length){
+    const n = Object.values(saved.answers).filter(a => a && a.v !== null && a.v !== undefined).length;
+    const card = el(`
+      <div class="card resume-card">
+        <h2>Tiene un diagnóstico en curso</h2>
+        <p class="muted">${esc(saved.institution && saved.institution.nombre || "Institución sin nombre")}: ${n} respuestas guardadas en este navegador el ${new Date(saved.savedAt).toLocaleDateString('es-CO')}.</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-resume">Continuar el diagnóstico</button>
+          <button class="btn btn-ghost" id="btn-discard">Borrar y empezar de nuevo</button>
+        </div>
+      </div>`);
+    wrap.appendChild(card);
+    setTimeout(() => {
+      document.getElementById('btn-resume').onclick = () => {
+        state.mode = saved.mode || "express"; state.institution = saved.institution || state.institution;
+        state.answers = saved.answers || {};
+        state.pos = (saved.pos && BYCODE[saved.pos]) ? saved.pos : navList()[0].code;
+        if(isDerived(BYCODE[state.pos]) || !inMode(BYCODE[state.pos], state.mode)) state.pos = navList()[0].code;
+        state.screen = "wizard"; render();
+      };
+      document.getElementById('btn-discard').onclick = () => {
+        if(confirm("Se borrarán las respuestas guardadas en este navegador. ¿Desea continuar?")){ clearSaved(); state.answers = {}; render(); }
+      };
+    }, 0);
+  }
+
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Alcance de la herramienta</h2>
+      <p class="body">GGGI Colombia pone a disposición esta herramienta para que las instituciones financieras de segundo piso reconozcan su nivel de adopción de un Sistema de Administración de Riesgos Ambientales, Sociales y Climáticos (SARAS), tomando como referencia estándares internacionales de gestión ambiental y social y los requerimientos de la Circular Externa 015 de 2025 de la Superintendencia Financiera de Colombia.</p>
+      <p class="body">La herramienta reconoce el modelo de negocio del segundo piso: la gestión del riesgo se ejerce principalmente a través de los intermediarios financieros de primer piso. Por eso incluye un módulo específico de Gestión de Intermediarios Financieros, que evalúa cómo la entidad examina, contrata, verifica y fortalece a esos intermediarios.</p>
+      <p class="body">Alcance regulatorio: el Capítulo XXXIII exige a los establecimientos de crédito y a las Instituciones Oficiales Especiales gestionar los riesgos ambientales y sociales, incluidos los climáticos, asociados a sus productos del activo (numeral 1.3.a). Las reglas particulares para operaciones de crédito de la Sección II no aplican al redescuento cuando estas entidades operan como banca de segundo piso, aunque pueden adoptarse de forma voluntaria (numeral 2.2.b). Por eso el módulo de Gestión de Intermediarios Financieros se basa en esa aplicación voluntaria y en buenas prácticas internacionales. El plazo de implementación del Capítulo es de 18 meses contados desde la publicación de la Circular, el 3 de octubre de 2025.</p>
+    </div>`));
+
+  const rows = MODULES.map(m => {
+    const qs = FLAT.filter(q => q.moduleCode === m.code);
+    return `<tr><td>${m.code}</td><td>${esc(m.desc)}</td><td>${qs.filter(q=>q.express).length}</td><td>${qs.length}</td></tr>`;
+  }).join("");
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Módulos</h2>
+      <div class="scroll-x"><table class="module-table">
+        <thead><tr><th>Código</th><th>Módulo</th><th>Rápido</th><th>Completo</th></tr></thead>
+        <tbody>${rows}<tr class="total-row"><td colspan="2">Total</td><td>${N_EXPRESS}</td><td>${N_FULL}</td></tr></tbody>
+      </table></div>
+    </div>`));
+
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Cómo se responde y cómo se calcula el resultado</h2>
+      <details class="method">
+        <summary>Ver la metodología</summary>
+        <p><b>Dos tipos de pregunta.</b> Las preguntas de existencia se responden con <i>Sí</i>, <i>Parcialmente</i> o <i>No</i> (equivalentes a 100 %, 50 % y 0 %). Las preguntas de práctica se responden en una escala de 0 a 3: <i>Inexistente</i>, <i>Inicial</i>, <i>Establecido</i> u <i>Optimizado</i> (0 %, 33 %, 67 % y 100 %).</p>
+        <p><b>No aplica.</b> Puede marcarse cuando la práctica no corresponde al modelo de negocio de la entidad. Exige una justificación y se excluye del cálculo.</p>
+        <p><b>Preguntas derivadas.</b> Algunas preguntas dependen de otra. Por ejemplo, si la entidad no cuenta con política (POL-1 = No), las preguntas sobre el contenido de la política se registran automáticamente como <i>No</i> y no se muestran.</p>
+        <p><b>Cobertura mínima.</b> El nivel de madurez de cada módulo y el nivel global solo se asignan cuando se ha respondido al menos el ${Math.round(MIN_COVERAGE*100)} % de las preguntas correspondientes.</p>
+        <p><b>Resultado global.</b> Es el promedio de los módulos, todos con el mismo peso. Los niveles se asignan así: menos de ${Math.round(THRESHOLDS[0]*100)} %, Incipiente; desde ${Math.round(THRESHOLDS[0]*100)} %, Básico; desde ${Math.round(THRESHOLDS[1]*100)} %, Estructurado; desde ${Math.round(THRESHOLDS[2]*100)} %, Avanzado.</p>
+        <p><b>Referencias.</b> Los numerales citados corresponden al Capítulo XXXIII de la Circular Básica Contable y Financiera, adicionado por la Circular Externa 015 de 2025. Se distinguen tres tipos de etiqueta: requisito del Capítulo XXXIII, referencia voluntaria del mismo Capítulo (por ejemplo, los indicadores del Anexo 1) y marcos internacionales o buenas prácticas, como la Norma de Desempeño de IFC, la Nota Interpretativa de IFC sobre Intermediarios Financieros, TCFD, TNFD o la Taxonomía Verde de Colombia.</p>
+      </details>
+      <details class="method">
+        <summary>Ver el glosario</summary>
+        <dl class="gloss-list">${GLOSSARY.map(g => `<dt>${esc(g.k)}</dt><dd>${esc(g.d)}</dd>`).join("")}</dl>
+      </details>
+    </div>`));
+
+  const card = el(`
+    <div class="card">
+      <h2>Iniciar un diagnóstico</h2>
+      <div class="mode-grid" role="radiogroup" aria-label="Tipo de diagnóstico">
+        <button type="button" class="mode ${state.mode==='express'?'selected':''}" data-mode="express" role="radio" aria-checked="${state.mode==='express'}">
+          <b>Diagnóstico rápido</b><span>${N_EXPRESS} preguntas clave, unos 10 minutos. Ofrece una primera lectura indicativa.</span>
+        </button>
+        <button type="button" class="mode ${state.mode==='completo'?'selected':''}" data-mode="completo" role="radio" aria-checked="${state.mode==='completo'}">
+          <b>Diagnóstico completo</b><span>${N_FULL} preguntas, unos 30 minutos. Genera la hoja de ruta detallada.</span>
+        </button>
+      </div>
+      <div class="field">
+        <label for="f-nombre">Nombre de la institución financiera</label>
+        <input id="f-nombre" type="text" value="${esc(state.institution.nombre)}" placeholder="Ej. Financiera Ejemplo S.A.">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-tipo">Tipo de institución</label>
+          <select id="f-tipo">
+            <option value="">Seleccione…</option>
+            ${["Banco de segundo piso","Fondo de redescuento","Corporación financiera de fomento","Fondo de garantías","Otra"].map(t => `<option ${state.institution.tipo===t?"selected":""}>${t}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-fecha">Fecha de diligenciamiento</label>
+          <input id="f-fecha" type="date" value="${esc(state.institution.fecha)}">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-resp">Persona responsable</label>
+          <input id="f-resp" type="text" value="${esc(state.institution.responsable)}" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label for="f-cargo">Cargo</label>
+          <input id="f-cargo" type="text" value="${esc(state.institution.cargo)}" placeholder="Ej. Oficial de Riesgos">
+        </div>
+      </div>
+      <div class="note-box">Las respuestas se guardan automáticamente en este navegador. Solo salen de él si usted descarga el archivo de resultados o pulsa «Enviar resultados a GGGI» y acepta el aviso de tratamiento de datos.</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-start">Comenzar el diagnóstico</button>
+        <label class="btn btn-ghost" style="cursor:pointer;">Cargar un archivo guardado
+          <input type="file" id="file-load" accept="application/json" style="display:none;">
+        </label>
+      </div>
+    </div>`);
+  wrap.appendChild(card);
+
+  setTimeout(() => {
+    card.querySelectorAll('.mode').forEach(b => b.onclick = () => {
+      readInstitution(); state.mode = b.dataset.mode; render();
+    });
+    document.getElementById('btn-start').onclick = () => {
+      readInstitution();
+      state.pos = navList()[0].code; state.screen = "wizard"; render();
+    };
+    document.getElementById('file-load').onchange = (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        try{
+          const p = JSON.parse(ev.target.result);
+          if(!p.answers) throw new Error();
+          state.institution = p.institution || state.institution;
+          state.answers = p.answers; state.mode = p.mode || "completo";
+          state.pos = navList()[0].code; state.screen = "wizard"; render();
+        }catch(err){ alert("No se pudo leer el archivo. Verifique que sea un JSON exportado desde la versión 2.0 de esta herramienta."); }
+      };
+      r.readAsText(file);
+    };
+  }, 0);
+  return wrap;
+}
+function readInstitution(){
+  const g = id => { const x = document.getElementById(id); return x ? x.value : ""; };
+  state.institution = {nombre:g('f-nombre'), tipo:g('f-tipo'), fecha:g('f-fecha'), responsable:g('f-resp'), cargo:g('f-cargo')};
+}
+
+function renderWizard(){
+  const wrap = document.createElement('div');
+  const q = currentQ();
+  const list = navList();
+  const idx = list.findIndex(x => x.code === q.code);
+  const modQs = list.filter(x => x.mi === q.mi);
+  const posInMod = modQs.findIndex(x => x.code === q.code) + 1;
+  const isModEnd = posInMod === modQs.length;
+  const a = state.answers[q.code] || {};
+  const opts = (q.t === "bin" ? BIN_OPTS : MAD_OPTS).concat([NA_OPT]);
+  const g = globalStats();
+
+  wrap.appendChild(el(`
+    <div class="progress-wrap no-print">
+      <div class="progress-meta"><span>Módulo ${q.mi+1} de ${MODULES.length}: <b>${esc(q.moduleDesc)}</b></span><span>${pctTxt(g.coverage)} respondido</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${g.coverage*100}%"></div></div>
+      <div class="module-pills" id="pills"></div>
+    </div>`));
+
+  const card = el(`
+    <div class="card q-card">
+      <div class="q-code">${esc(q.dimTitle)}<span class="q-num">${q.code}${q.orig && q.orig!==q.code ? ` (antes ${q.orig})` : ""}, pregunta ${posInMod} de ${modQs.length} del módulo</span></div>
+      <div class="q-text">${withGlossary(q.q)}</div>
+      <div class="gloss-box" id="gloss-box" hidden></div>
+      <div class="scale-hint">${q.t === "bin" ? "Pregunta de existencia" : "Pregunta de práctica: elija el grado de desarrollo"}</div>
+      <div class="choice-grid" id="choices" role="radiogroup"></div>
+      <div id="na-box" ${a.v==="na" ? "" : "hidden"}>
+        <label class="ev-label" for="f-just">Justificación de «No aplica» (obligatoria)</label>
+        <textarea id="f-just" placeholder="Explique por qué esta práctica no corresponde al modelo de negocio de la entidad…">${esc(a.just||"")}</textarea>
+      </div>
+      <div id="chk-box"></div>
+      <div class="ev-grid">
+        <div class="field">
+          <label for="f-soporte">Soporte que respalda la respuesta</label>
+          <select id="f-soporte"><option value="">Sin soporte documental</option>${SOPORTES.map(s => `<option ${a.soporte===s?"selected":""}>${s}</option>`).join("")}</select>
+        </div>
+      </div>
+      <label class="ev-label" for="f-obs">Observaciones (opcional)</label>
+      <textarea id="f-obs" placeholder="Nombre del documento, fecha de aprobación, comentarios…">${esc(a.obs||"")}</textarea>
+      ${state.notice ? `<div class="warn" role="alert">${esc(state.notice)}</div>` : ""}
+      <div class="refs">${q.refs.map(r => `<span class="chip ${refClass(r)}">${esc(r)}</span>`).join("")}</div>
+      <div class="nav-row no-print">
+        <button class="btn btn-ghost" id="btn-prev" ${idx===0?"disabled":""}>Anterior</button>
+        <button class="btn btn-primary" id="btn-next" ${a.v===null||a.v===undefined?"disabled":""}>${isModEnd ? "Ver resultado del módulo" : "Siguiente"}</button>
+      </div>
+    </div>`);
+  wrap.appendChild(card);
+
+  setTimeout(() => {
+    const cd = document.getElementById('choices');
+    opts.forEach((o, i) => {
+      const sel = a.v === o.v;
+      const b = el(`<button type="button" class="choice ${o.cls} ${sel?"selected":""}" role="radio" aria-checked="${sel}"><span class="dot"></span><span><b>${o.label}</b><small>${o.sub}</small></span><kbd>${i+1}</kbd></button>`);
+      b.onclick = () => { syncFields(); ensureAnswer(q.code).v = o.v; state.notice = ""; render(); };
+      cd.appendChild(b);
+    });
+
+    if(q.checklist){
+      const box = document.getElementById('chk-box');
+      const checked = new Set(a.check || []);
+      box.appendChild(el(`<div class="chk-wrap"><div class="ev-label">Marque los factores identificados (informativo, no afecta el puntaje)</div>${q.checklist.map(gr => `<fieldset class="chk"><legend>${gr.grupo}</legend>${gr.items.map(it => `<label><input type="checkbox" value="${esc(it)}" ${checked.has(it)?"checked":""}> ${esc(it)}</label>`).join("")}</fieldset>`).join("")}</div>`));
+    }
+
+    card.querySelectorAll('.term').forEach(t => t.onclick = () => {
+      const gb = document.getElementById('gloss-box'); const gi = GLOSSARY[+t.dataset.term];
+      const same = !gb.hidden && gb.dataset.term === t.dataset.term;
+      gb.hidden = same; gb.dataset.term = t.dataset.term;
+      gb.innerHTML = `<b>${esc(gi.k)}</b>: ${esc(gi.d)}`;
+    });
+
+    const pills = document.getElementById('pills');
+    MODULES.forEach((m, mi) => {
+      const s = moduleStats(mi);
+      const cls = mi === q.mi ? "active" : (s.coverage === 1 ? "done" : "");
+      const p = el(`<button class="pill ${cls}" title="${esc(m.desc)}">${m.code}</button>`);
+      p.onclick = () => { syncFields(); if(!validateCurrent()) return; const f = firstOfModule(mi); if(f){ state.pos = f.code; state.notice=""; render(); window.scrollTo(0,0);} };
+      pills.appendChild(p);
+    });
+
+    document.getElementById('btn-prev').onclick = goPrev;
+    document.getElementById('btn-next').onclick = goNext;
+    ['f-obs','f-just'].forEach(id => { const x = document.getElementById(id); if(x) x.onblur = () => { syncFields(); persist(); }; });
+    document.getElementById('f-soporte').onchange = () => { syncFields(); persist(); };
+    card.querySelectorAll('.chk input').forEach(c => c.onchange = () => { syncFields(); persist(); });
+
+    document.onkeydown = (e) => {
+      if(state.screen !== "wizard") return;
+      const tag = (e.target.tagName||"").toLowerCase();
+      if(tag === "textarea" || tag === "input" || tag === "select") return;
+      const n = parseInt(e.key, 10);
+      if(n >= 1 && n <= opts.length){ cd.children[n-1].click(); }
+      else if(e.key === "ArrowRight" || e.key === "Enter"){ const b = document.getElementById('btn-next'); if(b && !b.disabled) b.click(); }
+      else if(e.key === "ArrowLeft"){ const b = document.getElementById('btn-prev'); if(b && !b.disabled) b.click(); }
+    };
+  }, 0);
+  return wrap;
+}
+
+function heroBg(p){ return ["#c0454a", "#c97a2e", "#b8841c", "#2f6b59"][levelIdx(p)]; }
+function barColor(p){ return ["var(--red)","var(--orange)","var(--yellow)","var(--green)"][levelIdx(p)]; }
+
+function gapsFor(filterFn){
+  return activeQs().filter(q => {
+    if(!filterFn(q) || isDerived(q)) return false;
+    const s = scoreOf(q);
+    return s !== null && s !== "na" && s <= 0.5;
+  });
+}
+function answerLabel(q){
+  if(isDerived(q)) return "No (derivada)";
+  const a = state.answers[q.code]; if(!a || a.v===null || a.v===undefined) return "Sin responder";
+  if(a.v === "na") return "No aplica";
+  return (q.t === "bin" ? BIN_OPTS : MAD_OPTS).find(o => o.v === a.v).label;
+}
+
+function goHome(){
+  persist();                     // las respuestas quedan guardadas y se pueden retomar
+  state.screen = "intro"; state.notice = "";
+  render(); window.scrollTo(0,0);
+}
+
+function renderModuleResults(){
+  const wrap = document.createElement('div');
+  const mi = state.modResults; const m = MODULES[mi];
+  const s = moduleStats(mi);
+  const lv = levelIdx(s.pct);
+  const list = navList();
+  const nextQ = list.find(q => q.mi > mi);
+  const bg = s.determined ? heroBg(s.pct) : "#5c6b68";
+
+  wrap.appendChild(el(`
+    <div class="score-hero" style="background:${bg};">
+      <div class="score-ring" style="--pct:${Math.round(s.pct*100)}"><div class="score-ring-inner" style="background:${bg};"><b>${s.answered ? pctTxt(s.pct) : "–"}</b><span>del módulo</span></div></div>
+      <div class="score-hero-text">
+        <h2>${esc(m.desc)}</h2>
+        <p>${s.answered + s.na} de ${s.n} preguntas respondidas${s.derived ? `, ${s.derived} derivadas` : ""}${s.na ? `, ${s.na} marcadas como No aplica` : ""}</p>
+        <span class="level-tag">${s.determined ? LEVELS[lv].label : "Nivel no determinado"}</span>
+      </div>
+    </div>`));
+  wrap.appendChild(el(s.determined
+    ? `<div class="note-box" style="border-left-color:${bg};"><b>${LEVELS[lv].label}:</b> ${esc(MODULE_LEVELS[m.code][lv])}</div>`
+    : `<div class="warn">Responda al menos el ${Math.round(MIN_COVERAGE*100)} % de las preguntas del módulo para asignar un nivel.</div>`));
+
+  const gaps = gapsFor(q => q.mi === mi);
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Principales brechas del módulo</h2>
+      ${gaps.length ? `<ul class="gap-list">${gaps.map(q => `<li><span class="gap-code">${q.code}</span> ${esc(q.accion)}</li>`).join("")}</ul>` : `<p class="muted">No se identificaron brechas en las preguntas respondidas de este módulo.</p>`}
+    </div>`));
+
+  wrap.appendChild(el(`
+    <div class="nav-row no-print">
+      <button class="btn btn-ghost" id="btn-home-m">Volver a la página principal</button>
+      <button class="btn btn-ghost" id="btn-back">Revisar respuestas del módulo</button>
+      <button class="btn btn-primary" id="btn-cont">${nextQ ? "Continuar con el siguiente módulo" : "Ver el panel de resultados"}</button>
+    </div>`));
+  setTimeout(() => {
+    document.getElementById('btn-home-m').onclick = goHome;
+    document.getElementById('btn-back').onclick = () => { const f = firstOfModule(mi); state.pos = f.code; state.screen = "wizard"; render(); window.scrollTo(0,0); };
+    document.getElementById('btn-cont').onclick = () => {
+      if(nextQ){ state.pos = nextQ.code; state.screen = "wizard"; } else state.screen = "results";
+      render(); window.scrollTo(0,0);
+    };
+  }, 0);
+  return wrap;
+}
+
+function radarSVG(cur, prev){
+  const N = MODULES.length, cx = 170, cy = 150, R = 105;
+  const pt = (i, r) => { const ang = -Math.PI/2 + i*2*Math.PI/N; return [cx + r*Math.cos(ang), cy + r*Math.sin(ang)]; };
+  let rings = "";
+  [0.33, 0.67, 1].forEach(f => { rings += `<polygon points="${MODULES.map((_, i) => pt(i, R*f).join(",")).join(" ")}" class="rd-ring"/>`; });
+  let axes = MODULES.map((m, i) => { const [x,y] = pt(i, R); const [lx,ly] = pt(i, R+22); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="rd-axis"/><text x="${lx}" y="${ly+4}" text-anchor="middle" class="rd-label">${m.code}</text>`; }).join("");
+  const poly = (vals, cls) => `<polygon points="${vals.map((v, i) => pt(i, R*Math.max(v,0.02)).join(",")).join(" ")}" class="${cls}"/>`;
+  return `<svg viewBox="0 0 340 300" class="radar" role="img" aria-label="Gráfico de radar del nivel de adopción por módulo">${rings}${axes}${prev ? poly(prev, "rd-prev") : ""}${poly(cur, "rd-cur")}</svg>`;
+}
+
+function renderResults(){
+  const wrap = document.createElement('div');
+  const g = globalStats();
+  const lv = levelIdx(g.pct);
+  const bg = g.determined ? heroBg(g.pct) : "#5c6b68";
+
+  wrap.appendChild(el(`
+    <div class="score-hero" style="background:${bg};">
+      <div class="score-ring" style="--pct:${Math.round(g.pct*100)}"><div class="score-ring-inner" style="background:${bg};"><b>${pctTxt(g.pct)}</b><span>adopción</span></div></div>
+      <div class="score-hero-text">
+        <h2>Panel de resultados SARAS</h2>
+        <p>${esc(state.institution.nombre || "Institución sin nombre registrado")}. ${state.mode === "express" ? "Diagnóstico rápido" : "Diagnóstico completo"}, ${g.done} de ${g.n} preguntas respondidas (${pctTxt(g.coverage)}).</p>
+        <span class="level-tag">${g.determined ? LEVELS[lv].label : "Nivel no determinado"}</span>
+      </div>
+    </div>`));
+  wrap.appendChild(el(g.determined
+    ? `<div class="note-box" style="border-left-color:${bg};"><b>${LEVELS[lv].label}:</b> ${LEVELS[lv].sub}</div>`
+    : `<div class="warn">La cobertura es inferior al ${Math.round(MIN_COVERAGE*100)} %. Complete más preguntas para asignar un nivel global.</div>`));
+  if(state.mode === "express") wrap.appendChild(el(`<div class="note-box">Este es un resultado indicativo basado en ${N_EXPRESS} preguntas clave. El diagnóstico completo conserva sus respuestas y agrega ${N_FULL - N_EXPRESS} preguntas.</div>`));
+
+  // Perfil por módulo
+  const prevP = state.prev ? state.prev.pcts : null;
+  const card = el(`
+    <div class="card">
+      <h2>Adopción por módulo</h2>
+      <div class="profile">
+        <div class="radar-wrap">${radarSVG(g.mods.map(s => s.pct), prevP)}
+          ${prevP ? `<div class="legend"><span class="lg cur"></span>Actual <span class="lg prev"></span>${esc(state.prev.label)}</div>` : ""}
+        </div>
+        <div id="mod-rows" class="mod-rows"></div>
+      </div>
+    </div>`);
+  wrap.appendChild(card);
+  const rows = card.querySelector('#mod-rows');
+  MODULES.forEach((m, mi) => {
+    const s = g.mods[mi];
+    const delta = prevP ? Math.round((s.pct - prevP[mi])*100) : null;
+    const row = el(`
+      <div class="module-row">
+        <div>
+          <button class="module-name linklike">${m.code}: ${esc(m.desc.replace(/^\d+\.\s*/, ""))}</button>
+          <div class="module-sub">${s.answered + s.na}/${s.n} respondidas${s.determined ? `, ${LEVELS[levelIdx(s.pct)].label}` : ", nivel no determinado"}</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.pct*100)}%; background:${barColor(s.pct)};"></div></div>
+        <div class="module-pct">${pctTxt(s.pct)}${delta !== null ? `<span class="delta ${delta>0?"up":delta<0?"down":""}">${delta>0?"+":""}${delta}</span>` : ""}</div>
+      </div>`);
+    row.querySelector('.module-name').onclick = () => { const f = firstOfModule(mi); if(f){ state.pos = f.code; state.screen = "wizard"; render(); window.scrollTo(0,0);} };
+    rows.appendChild(row);
+  });
+
+  // Respaldo documental
+  let fav = 0, sop = 0;
+  activeQs().forEach(q => { const s = scoreOf(q); if(typeof s === "number" && s >= 0.5 && !isDerived(q)){ fav++; const a = state.answers[q.code]; if(a && a.soporte) sop++; } });
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Respaldo documental</h2>
+      <p class="body">${fav ? `${sop} de ${fav} respuestas favorables (${pctTxt(sop/fav)}) cuentan con un soporte documental identificado. Las respuestas sin soporte deben considerarse autodeclaradas.` : "Aún no hay respuestas favorables para evaluar su respaldo documental."}</p>
+      ${fav ? `<div class="bar-track wide"><div class="bar-fill" style="width:${sop/fav*100}%; background:var(--moss-500);"></div></div>` : ""}
+    </div>`));
+
+  // Hoja de ruta
+  const gaps = gapsFor(() => true);
+  const derivedN = activeQs().filter(q => isDerived(q)).length;
+  const road = [1,2,3].map(h => {
+    const items = gaps.filter(q => q.h === h).sort((a, b) => a.mi - b.mi || scoreOf(a) - scoreOf(b));
+    if(!items.length) return "";
+    return `<div class="road-step"><h3>${HORIZONS[h]}</h3><ul class="gap-list">${items.map(q => `<li><span class="gap-code">${q.code}</span> ${esc(q.accion)} <span class="muted">(${answerLabel(q)})</span></li>`).join("")}</ul></div>`;
+  }).join("");
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Hoja de ruta sugerida</h2>
+      <p class="muted">Acciones derivadas de las respuestas No, Parcialmente, Inexistente o Inicial, ordenadas por horizonte de implementación.${derivedN ? ` Las ${derivedN} preguntas derivadas quedan cubiertas por la acción de la pregunta de la que dependen.` : ""}</p>
+      ${road || `<p class="muted">No se identificaron brechas en las preguntas respondidas.</p>`}
+    </div>`));
+
+  // Brechas por marco de referencia
+  const fw = {};
+  activeQs().forEach(q => {
+    const s = scoreOf(q); if(s === null || s === "na") return;
+    q.refs.forEach(r => { fw[r] = fw[r] || {n:0, gap:0}; fw[r].n++; if(s <= 0.5) fw[r].gap++; });
+  });
+  const fwRows = Object.keys(fw).sort((a, b) => a.localeCompare(b, "es", {numeric:true})).map(r => `<tr><td><span class="chip ${refClass(r)}">${esc(r)}</span></td><td>${fw[r].n}</td><td>${fw[r].gap}</td></tr>`).join("");
+  let reqN = 0, reqGap = 0;
+  activeQs().forEach(q => {
+    const s = scoreOf(q); if(s === null || s === "na") return;
+    if(q.refs.some(r => refKind(r) === "req")){ reqN++; if(s <= 0.5) reqGap++; }
+  });
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Brechas por marco de referencia</h2>
+      <p class="body">${reqN ? `${reqGap} de las ${reqN} preguntas evaluadas que se vinculan con requisitos del Capítulo XXXIII de la Circular Básica Contable y Financiera presentan brecha.` : "Aún no hay respuestas vinculadas con requisitos del Capítulo XXXIII."} Las referencias marcadas como voluntarias y las buenas prácticas no son exigencias regulatorias.</p>
+      <div class="scroll-x"><table class="module-table">
+        <thead><tr><th>Referencia</th><th>Preguntas evaluadas</th><th>Con brecha</th></tr></thead>
+        <tbody>${fwRows || `<tr><td colspan="3">Sin respuestas.</td></tr>`}</tbody>
+      </table></div>
+    </div>`));
+
+  // Factores identificados y No aplica
+  const ges3 = state.answers["GES-3"];
+  const naList = activeQs().filter(q => state.answers[q.code] && state.answers[q.code].v === "na" && !isDerived(q));
+  if((ges3 && ges3.check && ges3.check.length) || naList.length){
+    wrap.appendChild(el(`
+      <div class="card">
+        <h2>Información complementaria</h2>
+        ${ges3 && ges3.check && ges3.check.length ? `<h3 class="sub">Factores de riesgo identificados (GES-3)</h3><div class="chips">${ges3.check.map(c => `<span class="chip">${esc(c)}</span>`).join("")}</div>` : ""}
+        ${naList.length ? `<h3 class="sub">Preguntas marcadas como No aplica</h3><ul class="gap-list">${naList.map(q => `<li><span class="gap-code">${q.code}</span> ${esc(state.answers[q.code].just || "")}</li>`).join("")}</ul>` : ""}
+      </div>`));
+  }
+
+  // Acciones
+  const sheets = !!SHEETS_ENDPOINT_URL;
+  const actions = el(`
+    <div class="card no-print">
+      <h2>Guardar y compartir</h2>
+      ${sheets ? `<label class="consent"><input type="checkbox" id="f-consent"> Autorizo a GGGI a tratar estas respuestas con fines de análisis agregado de la adopción de SARAS, conforme a la Ley 1581 de 2012.</label>` : ""}
+      <div class="actions-row">
+        ${sheets ? `<button class="btn btn-primary" id="btn-send" disabled>Enviar resultados a GGGI</button>` : ""}
+        <button class="btn ${sheets ? "btn-ghost" : "btn-primary"}" id="btn-print">Imprimir o guardar en PDF</button>
+        <button class="btn btn-ghost" id="btn-json">Descargar respuestas (JSON)</button>
+        <button class="btn btn-ghost" id="btn-csv">Descargar tabla (CSV)</button>
+        <label class="btn btn-ghost" style="cursor:pointer;">Comparar con un diagnóstico anterior
+          <input type="file" id="file-prev" accept="application/json" style="display:none;">
+        </label>
+        ${state.mode === "express" ? `<button class="btn btn-ghost" id="btn-full">Pasar al diagnóstico completo</button>` : ""}
+        <button class="btn btn-ghost" id="btn-edit">Revisar respuestas</button>
+        <button class="btn btn-ghost" id="btn-home">Volver a la página principal</button>
+      </div>
+    </div>`);
+  wrap.appendChild(actions);
+
+  setTimeout(() => {
+    document.getElementById('btn-print').onclick = () => window.print();
+    document.getElementById('btn-home').onclick = goHome;
+    document.getElementById('btn-json').onclick = () => download(JSON.stringify(buildPayload(), null, 2), "application/json", "json");
+    document.getElementById('btn-csv').onclick = () => download("\ufeff" + buildCSV(), "text/csv;charset=utf-8", "csv");
+    document.getElementById('btn-edit').onclick = () => { state.pos = navList()[0].code; state.screen = "wizard"; render(); window.scrollTo(0,0); };
+    const full = document.getElementById('btn-full');
+    if(full) full.onclick = () => {
+      state.mode = "completo";
+      const first = navList().find(q => { const s = scoreOf(q); return s === null; }) || navList()[0];
+      state.pos = first.code; state.screen = "wizard"; render(); window.scrollTo(0,0);
+    };
+    document.getElementById('file-prev').onchange = (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        try{
+          const p = JSON.parse(ev.target.result); if(!p.answers) throw new Error();
+          const gs = globalStats(p.answers, state.mode);
+          const d = p.institution && p.institution.fecha ? p.institution.fecha : (p.exportedAt || "").slice(0,10);
+          state.prev = {label: "Anterior" + (d ? ` (${d})` : ""), pcts: gs.mods.map(s => s.pct)};
+          render();
+        }catch(err){ alert("No se pudo leer el archivo. Verifique que sea un JSON exportado desde la versión 2.0 de esta herramienta."); }
+      };
+      r.readAsText(file);
+    };
+    if(sheets){
+      const c = document.getElementById('f-consent'), b = document.getElementById('btn-send');
+      c.onchange = () => { b.disabled = !c.checked; };
+      b.onclick = () => {
+        b.disabled = true; b.textContent = "Enviando…";
+        fetch(SHEETS_ENDPOINT_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(buildPayload())})
+          .then(r => r.json()).then(res => {
+            if(res.status === "ok"){ b.textContent = "Resultados enviados"; }
+            else { b.disabled = false; b.textContent = "Enviar resultados a GGGI"; alert("El envío falló: " + (res.message || "error no especificado") + ". Descargue el JSON y envíelo por correo."); }
+          }).catch(() => { b.disabled = false; b.textContent = "Enviar resultados a GGGI"; alert("No hay conexión con el servidor de respuestas. Descargue el JSON y envíelo por correo."); });
+      };
+    }
+  }, 0);
+  return wrap;
+}
+
+function buildPayload(){
+  const g = globalStats();
+  return {
+    tool: "Autodiagnóstico SARAS Segundo Piso", version: TOOL_VERSION, mode: state.mode,
+    institution: state.institution, answers: state.answers, exportedAt: new Date().toISOString(),
+    results: {global: {pct: g.pct, coverage: g.coverage, level: g.determined ? LEVELS[levelIdx(g.pct)].label : null},
+              modules: MODULES.map((m, mi) => ({code: m.code, pct: g.mods[mi].pct, coverage: g.mods[mi].coverage, level: g.mods[mi].determined ? LEVELS[levelIdx(g.mods[mi].pct)].label : null}))}
+  };
+}
+function buildCSV(){
+  const cols = ["Código","Código anterior","Módulo","Dimensión","Pregunta","Tipo","Respuesta","Puntaje (%)","Soporte","Observaciones","Justificación No aplica","Factores identificados","Horizonte","Acción sugerida","Referencias"];
+  const q2 = v => `"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const lines = [cols.map(q2).join(";")];
+  activeQs().forEach(q => {
+    const a = state.answers[q.code] || {}; const s = scoreOf(q);
+    lines.push([q.code, q.orig||"", q.moduleDesc, q.dimTitle, q.q, q.t==="bin"?"Existencia":"Práctica", answerLabel(q),
+      typeof s === "number" ? Math.round(s*100) : "", a.soporte||"", a.obs||"", a.v==="na" ? a.just||"" : "", (a.check||[]).join(", "),
+      typeof s === "number" && s <= 0.5 && !isDerived(q) ? HORIZONS[q.h] : "", typeof s === "number" && s <= 0.5 && !isDerived(q) ? q.accion : "", q.refs.join(", ")].map(q2).join(";"));
+  });
+  return lines.join("\r\n");
+}
+function download(content, type, ext){
+  const blob = new Blob([content], {type}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = "autodiagnostico_saras_segundo_piso_" + (state.institution.nombre || "institucion").replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g, "_") + "." + ext;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+render();
+
+</script>
+</body>
+</html>
